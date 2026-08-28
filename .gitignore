@@ -21,3 +21,9 @@ dataset/
 .vscode/
 .idea/
 .DS_Store
+
+#supabase related stuff 
+.vscode/
+.idea/
+.web/
+reflex.log
