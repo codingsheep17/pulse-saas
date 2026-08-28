@@ -1,0 +1,23 @@
+#python and virtual envs
+__pycache__/
+*.py[cod]
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+#Environment Variables & Secrets
+.env
+.env.local
+
+#Machine Learning Models & Large data (manage by DVC)
+*.joblib
+*.pkl
+data/
+dataset/
+
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
