@@ -6,3 +6,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #added the info inside env
 
 #built the login/Signup pipeline 
+
+#learning the reflex in reflexive way
