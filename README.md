@@ -10,3 +10,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #learning the reflex in reflexive way
 
 #checking the connectivity between reflex and supbase
+
+#gonna deal with the login sys now 
