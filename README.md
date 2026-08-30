@@ -8,3 +8,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #built the login/Signup pipeline 
 
 #learning the reflex in reflexive way
+
+#checking the connectivity between reflex and supbase
