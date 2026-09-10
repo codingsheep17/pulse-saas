@@ -17,3 +17,15 @@ supabase = create_client(
     PUBLIC_SUPABASE_URL,
     PUBLIC_SUPABASE_PUBLISHABLE_KEY
 )
+
+#app and its paths
+app = rx.App(
+    head_components=[
+        rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit", async_=True, defer=True)
+    ]
+)
+app.add_page(index, route="/", on_load=rx.call_script("setTimeout(renderCaptcha, 200);"))
+app.add_page(home, route="/home", on_load=AuthState.check_auth,)
+app.add_page(about,route="/about",on_load=AuthState.check_auth,)
+app.add_page(services,route="/services",on_load=AuthState.check_auth,)
+app.add_page(contact,route="/contact",on_load=AuthState.check_auth,)
