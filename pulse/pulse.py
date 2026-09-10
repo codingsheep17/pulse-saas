@@ -4,6 +4,32 @@ from dotenv import load_dotenv
 import os
 import time
 
+# --- 1. ADD THIS RIGHT BELOW YOUR IMPORTS ---
+
+# Pulse Global Colors
+BG = "#0D1110"
+NAV_BG = "#151B18"
+CARD_BG = "#1C2420"
+GREEN = "#B7E36B"
+YELLOW = "#F2D16B"
+TEXT = "#F3F5F2"
+MUTED = "#A8B0AC"
+BORDER = "#303A35"
+
+# Global App Style
+PULSE_STYLE = {
+    "background_color": BG,
+    "color": TEXT,
+    "font_family": "system-ui, -apple-system, sans-serif",
+    # This makes highlighted text look like your green accent!
+    "::selection": {
+        "background_color": GREEN,
+        "color": BG,
+    }
+}
+
+# (Keep your existing AuthState class and imports exactly as they are)
+
 #loading the envs
 load_dotenv()
 
