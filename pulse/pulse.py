@@ -193,6 +193,79 @@ class AuthState(rx.State):
             self.message = "Google login failed."
             self.message_type = "error"
     
+# NAVBAR
+# =========================
+
+def navbar():
+
+    return rx.vstack(
+
+        rx.hstack(
+
+            rx.heading(
+                "sheep",
+                size="6",
+                color=GREEN,
+            ),
+
+            rx.spacer(),
+
+            rx.hstack(
+
+                rx.link(
+                    "Home",
+                    href="/home",
+                    color=TEXT,
+                ),
+
+                rx.link(
+                    "About",
+                    href="/about",
+                    color=TEXT,
+                ),
+
+                rx.link(
+                    "Services",
+                    href="/services",
+                    color=TEXT,
+                ),
+
+                rx.link(
+                    "Contact",
+                    href="/contact",
+                    color=TEXT,
+                ),
+                rx.cond(
+                    AuthState.is_authenticated,
+                    rx.button(
+                        "Logout",
+                        width="20%",
+                        background=GREEN,
+                        color=BG,
+                        on_click=AuthState.logout,
+                    ),
+                ),
+
+                spacing="6",
+            ),
+
+            width="100%",
+            align="center",
+
+        ),
+
+        # Green bottom line
+        rx.box(
+            width="100%",
+            height="3px",
+            background=GREEN,
+        ),
+
+        width="100%",
+        background=NAV_BG,
+        padding="20px 40px 0 40px",
+    )
+
 
 
 
