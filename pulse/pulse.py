@@ -504,7 +504,33 @@ def footer():
         width="100%",
         background=NAV_BG,
     )
+    
+#=================================================================================
+# main entry point
+# =========================
 
+def index():
+
+    return rx.vstack(
+
+        navbar(),
+                
+        rx.center(
+           
+            auth_card(),
+
+            flex="1",
+            width="100%",
+            padding="40px 20px",
+
+        ),
+
+        footer(),
+
+        min_height="100vh",
+        background=BG,
+
+    )
 
 
 #app and its paths
