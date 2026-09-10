@@ -532,6 +532,101 @@ def index():
 
     )
 
+# ABOUT
+# ================================================================================
+
+def about():
+
+    return rx.vstack(
+
+        navbar(),
+
+        rx.center(
+            rx.heading(
+                "About Us",
+                size="8",
+                color=GREEN,
+            ),
+            flex="1",
+        ),
+
+        footer(),
+
+        min_height="100vh",
+        background=BG,
+    )
+
+# SERVICES
+# ================================================================================
+
+def services():
+
+    return rx.vstack(
+
+        navbar(),
+
+        rx.center(
+            rx.heading(
+                "Our Services",
+                size="8",
+                color=GREEN,
+            ),
+            flex="1",
+        ),
+
+        footer(),
+
+        min_height="100vh",
+        background=BG,
+    )
+    
+# CONTACT
+# ================================================================================
+def contact():
+
+    return rx.vstack(
+
+        navbar(),
+
+        rx.center(
+            rx.heading(
+                "Contact Us",
+                size="8",
+                color=GREEN,
+            ),
+            flex="1",
+        ),
+
+        footer(),
+
+        min_height="100vh",
+        background=BG,
+    )
+
+# HOME
+# ================================================================================
+
+def home():
+
+    return rx.vstack(
+
+        navbar(),
+
+        rx.center(
+            rx.heading(
+                "Home",
+                size="8",
+                color=GREEN,
+            ),
+            flex="1",
+        ),
+
+        footer(),
+
+        min_height="100vh",
+        background=BG,
+    )
+
 
 #app and its paths
 app = rx.App(
