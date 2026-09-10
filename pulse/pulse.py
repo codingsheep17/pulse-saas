@@ -4,12 +4,10 @@ from dotenv import load_dotenv
 import os
 import time
 
-#initializing the essentials
+#loading the envs
 load_dotenv()
 
-supbase: Client = create_client(os.getenv("PUBLIC_SUPABASE_URL"), os.getenv("PUBLIC_SUPABASE_PUBLISHABLE_KEY"))
-
-response = supbase.auth.sign_up({
-    "email":"codingsheep17@gmail.com",
-    "password":"haseeb19."
-})
+#fetching url and key
+PUBLIC_SUPABASE_URL = os.getenv("PUBLIC_SUPABASE_URL")
+PUBLIC_SUPABASE_PUBLISHABLE_KEY = os.getenv("PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+TURNSTILE_SITE_KEY=os.getenv("TURNSTILE_SITE_KEY")
