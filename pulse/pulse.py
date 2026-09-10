@@ -1,6 +1,8 @@
-from supabase import create_client, Client
+import reflex as rx
+from supabase import create_client
 from dotenv import load_dotenv
 import os
+import time
 
 #initializing the essentials
 load_dotenv()
