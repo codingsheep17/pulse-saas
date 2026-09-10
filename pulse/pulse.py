@@ -420,6 +420,90 @@ def auth_card():
     )
 
 #================================================================================
+# FOOTER
+# =========================
+
+def footer():
+
+    return rx.vstack(
+
+        rx.box(
+            width="100%",
+            height="3px",
+            background=GREEN,
+        ),
+
+        rx.box(
+
+            # LEFT
+            rx.text(
+                "© sheep",
+                color=GREEN,
+                position="absolute",
+                left="40px",
+                top="50%",
+                transform="translateY(calc(-50% - 7.5px))",
+            ),
+
+            # CENTER
+            rx.hstack(
+
+                rx.link(
+                    rx.image(
+                        src="https://upload.wikimedia.org/wikipedia/commons/8/81/LinkedIn_icon.svg",
+                        width="22px",
+                        height="22px",
+                    ),
+                    href="https://www.linkedin.com/in/syedhaseebshah19/",
+                    is_external=True,
+                ),
+
+                rx.link(
+                    rx.image(
+                        src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg",
+                        width="22px",
+                        height="22px",
+                        style={"filter": "invert(1)"},
+                    ),
+                    href="https://github.com/codingsheep17",
+                    is_external=True,
+                ),
+
+                rx.link(
+                    rx.image(
+                        src="https://upload.wikimedia.org/wikipedia/commons/a/a0/YouTube_social_red_circle_%282017%29.svg",
+                        width="22px",
+                        height="22px",
+                    ),
+                    href="https://www.youtube.com/@codingsheep17",
+                    is_external=True,
+                ),
+
+                spacing="6",
+                position="absolute",
+                left="50%",
+                top="50%",
+                transform="translate(-50%, calc(-50% - 6px))",
+            ),
+
+            # RIGHT
+            rx.text(
+                "codingsheep17@gmail.com",
+                color=GREEN,
+                position="absolute",
+                right="40px",
+                top="50%",
+                transform="translateY(calc(-50% - 7.5px))",
+            ),
+
+            width="100%",
+            height="35px",
+            position="relative",
+        ),
+
+        width="100%",
+        background=NAV_BG,
+    )
 
 
 
