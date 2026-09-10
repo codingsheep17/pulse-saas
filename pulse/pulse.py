@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 import time
 
-# --- 1. ADD THIS RIGHT BELOW YOUR IMPORTS ---
 
 # Pulse Global Colors
 BG = "#0D1110"
@@ -194,7 +193,7 @@ class AuthState(rx.State):
             self.message_type = "error"
     
 # NAVBAR
-# =========================
+# ===============================================================================
 
 def navbar():
 
@@ -266,6 +265,161 @@ def navbar():
         padding="20px 40px 0 40px",
     )
 
+#================================================================================
+# AUTH CARD
+# ========================
+def auth_card():
+
+    return rx.box(
+
+        rx.vstack(
+
+            rx.heading(
+                "Welcome to sheep",
+                size="8",
+                color=TEXT,
+                text_align="center",
+            ),
+
+            rx.text(
+                "Login or SignUp",
+                color=MUTED,
+                text_align="center",
+            ),
+
+            rx.input(
+                placeholder="Email",
+                type="email",
+                width="100%",
+                background="#252D29",
+                border_color=BORDER,
+                value=AuthState.email,
+                on_change=AuthState.set_email,
+            ),
+
+            rx.input(
+                placeholder="Password",
+                type="password",
+                width="100%",
+                background="#252D29",
+                border_color=BORDER,
+                value=AuthState.password,
+                on_change=AuthState.set_password,
+            ),
+            rx.cond(
+            AuthState.message != "",
+            rx.text(
+                AuthState.message,
+                color=rx.cond(
+                    AuthState.message_type == "success",
+                    GREEN,
+                    YELLOW,
+                    ),
+                text_align="center",
+                ),
+            ),
+            #adding the captcha here 
+            
+            #Load the official Cloudflare library securely
+            rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js", async_=True, defer=True),
+            
+            #Define the global success callback so Cloudflare can save the token
+            rx.script(
+                f"""
+                function renderCaptcha() {{
+                    // Only run if Cloudflare is loaded and our div exists
+                    if (window.turnstile && document.getElementById('my-captcha-box')) {{
+                        
+                        // GARBAGE COLLECTION: Destroy the old ghost widget if it exists
+                        if (window.pulseWidgetId !== undefined) {{
+                            try {{ window.turnstile.remove(window.pulseWidgetId); }} catch(e) {{}}
+                        }}
+                        
+                        // Render a fresh widget and save its unique ID
+                        window.pulseWidgetId = window.turnstile.render('#my-captcha-box', {{
+                            sitekey: '{TURNSTILE_SITE_KEY}',
+                            theme: 'dark',
+                            callback: function(token) {{
+                                window.turnstileToken = token;
+                                console.log("CAPTCHA Passed! Token saved.");
+                            }}
+                        }});
+                    }}
+                }}
+                """
+            ),
+            
+            # The actual container
+            rx.html('<div id="my-captcha-box"></div>'),
+
+            #Cloudflare automatically finds this div and renders the CAPTCHA
+            rx.html(
+                f"""
+                <div class="cf-turnstile" 
+                     data-sitekey="{TURNSTILE_SITE_KEY}" 
+                     data-callback="onTurnstileSuccess" 
+                     data-theme="dark">
+                </div>
+                """
+            ),
+            
+            rx.button(
+                "Login",
+                width="100%",
+                background=GREEN,
+                color=BG,
+                on_click=rx.call_script(
+                "window.turnstileToken || ''",
+                callback=AuthState.login,
+                ),
+            ),
+
+            rx.divider(
+                color=BORDER,
+            ),
+
+            rx.button(
+                "Continue with Google",
+                width="100%",
+                variant="outline",
+                border_color=YELLOW,
+                color=YELLOW,
+                on_click=AuthState.google_login,
+            ),
+
+            rx.text(
+                "Don't have an account?",
+                color=MUTED,
+            ),
+
+            rx.button(
+                "SignUp",
+                width="100%",
+                variant="outline",
+                border_color=GREEN,
+                color=GREEN,
+                on_click=AuthState.signup,
+            ),
+
+            spacing="5",
+            width="100%",
+
+        ),
+
+        width="420px",
+        padding="38px",
+
+        background=CARD_BG,
+
+        border="1px solid",
+        border_color=BORDER,
+
+        border_radius="20px",
+
+        box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
+    )
+
+#================================================================================
 
 
 
