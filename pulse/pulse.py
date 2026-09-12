@@ -587,13 +587,14 @@ def landing_hero():
             letter_spacing="-2px"
         ),
         
-        # Summary text
+        # Professional summary text replacing the placeholder
         rx.text(
-            "shortest summary goes here", 
+            "AI-Powered Infrastructure Monitoring & Early Warning System", 
             size="6", 
             color=TEXT, 
             font_weight="bold",
-            margin_top="20px"
+            margin_top="20px",
+            text_align="center"
         ),
         
         # Blueprint Box Styling
@@ -606,7 +607,7 @@ def landing_hero():
         justify_content="center",
         border=f"1px solid {BORDER}",
         box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
-        margin_bottom="40px",
+        margin_bottom="20px", # Reduced from 40px to pull everything up
     )
     
 # LANDING PAGE COMPONENTS
