@@ -657,10 +657,12 @@ def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str
         margin_bottom="100px",
     )
     
+#=====================================================================================
+# landing features 
 def landing_features():
     """Assembles all the features in the requested zigzag pattern."""
     return rx.vstack(
-        # Right Card: RAM
+        # 1. Right Card: RAM
         feature_row(
             "Memory Optimization", 
             "Track memory allocation in real-time. Pulse monitors active processes to prevent out-of-memory crashes before they happen.",
@@ -668,7 +670,7 @@ def landing_features():
             "Live monitoring of volatile memory consumption across all your infrastructure.",
             card_on_left=False
         ),
-        # Left Card: CPU
+        # 2. Left Card: CPU
         feature_row(
             "Processing Power",
             "Analyze thread loads and processor bottlenecks. Identify rogue processes consuming too many cycles.",
@@ -676,7 +678,7 @@ def landing_features():
             "Per-core performance metrics and historical load analysis.",
             card_on_left=True
         ),
-        # Right Card: GPU
+        # 3. Right Card: GPU
         feature_row(
             "Hardware Acceleration",
             "Keep an eye on compute-heavy workloads. Perfect for AI and machine learning infrastructure monitoring.",
@@ -684,7 +686,7 @@ def landing_features():
             "VRAM allocation, core temperature, and compute utilization tracking.",
             card_on_left=False
         ),
-        # Left Card: Network
+        # 4. Left Card: Network
         feature_row(
             "Network Throughput",
             "Detect unusual spikes in inbound or outbound traffic that could indicate a breach or a DDoS attempt.",
@@ -692,7 +694,7 @@ def landing_features():
             "Real-time bandwidth monitoring and packet loss detection.",
             card_on_left=True
         ),
-        # Right Card: Early Warning (Product Vision)
+        # 5. Right Card: Early Warning (Product Vision)
         feature_row(
             "AI Early Warning",
             "Pulse doesn't just show graphs. It learns your system's baseline and alerts you to anomalies instantly.",
@@ -702,7 +704,7 @@ def landing_features():
         ),
         width="100%",
         align_items="center",
-        padding_top="60px",
+        padding_top="10px", # Reduced from 60px to pull cards up
     )
 
 # MAIN ENTRY POINT (Updated)
