@@ -717,10 +717,9 @@ def index():
             rx.vstack(
                 landing_hero(),
                 
-                # Visual transition arrow
-                rx.icon(tag="arrow-down", color=TEXT, size=40, margin_bottom="60px"),
+                # Visual transition arrow with reduced spacing, and placeholder text removed
+                rx.icon(tag="arrow-down", color=TEXT, size=35, margin_bottom="20px"),
                 
-                # THIS IS THE MISSING PIECE! We are plugging your features in here:
                 landing_features(),
                 
                 align_items="center",
