@@ -14,3 +14,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #gonna deal with the login sys now 
 
 #adding the explanations to the main page 
+
+#add the images in the landing page, then move on to the login/signup designs

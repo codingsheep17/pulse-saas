@@ -194,72 +194,62 @@ class AuthState(rx.State):
     
 # NAVBAR
 # ===============================================================================
-
 def navbar():
-
     return rx.vstack(
-
         rx.hstack(
-
-            rx.heading(
-                "sheep",
-                size="6",
-                color=GREEN,
-            ),
-
+            rx.heading("Pulse", size="7", color=GREEN),
             rx.spacer(),
-
-            rx.hstack(
-
-                rx.link(
-                    "Home",
-                    href="/home",
-                    color=TEXT,
-                ),
-
-                rx.link(
-                    "About",
-                    href="/about",
-                    color=TEXT,
-                ),
-
-                rx.link(
-                    "Services",
-                    href="/services",
-                    color=TEXT,
-                ),
-
-                rx.link(
-                    "Contact",
-                    href="/contact",
-                    color=TEXT,
-                ),
-                rx.cond(
-                    AuthState.is_authenticated,
+            
+            rx.cond(
+                AuthState.is_authenticated,
+                # WHAT LOGGED IN USERS SEE: Links + Logout Button
+                rx.hstack(
+                    rx.link("Home", href="/home", color=TEXT),
+                    rx.link("About", href="/about", color=TEXT),
+                    rx.link("Services", href="/services", color=TEXT),
+                    rx.link("Contact", href="/contact", color=TEXT),
                     rx.button(
                         "Logout",
-                        width="20%",
                         background=GREEN,
                         color=BG,
+                        border_radius="20px",
+                        padding_x="24px",
                         on_click=AuthState.logout,
+                        cursor="pointer",
+                        _hover={"background": "#a2ce55"}, # Slight shade shift on hover
                     ),
+                    spacing="6",
+                    align="center",
                 ),
-
-                spacing="6",
+                # WHAT PUBLIC USERS SEE: Just Login/Signup Button
+                rx.button(
+                    "Login/Signup",
+                    background=TEXT,
+                    color=BG,
+                    border_radius="20px",
+                    padding_x="24px",
+                    cursor="pointer",
+                    transition="all 0.2s ease",
+                    _hover={
+                        "background": GREEN,        # Shifts from white/text color to your neon green!
+                        "color": BG,
+                        "transform": "translateY(-2px)", # Tiny lift effect
+                    },
+                    on_click=rx.redirect("/login"),
+                ),
             ),
-
             width="100%",
             align="center",
-
         ),
-
+        
         # Green bottom line
         rx.box(
             width="100%",
             height="3px",
             background=GREEN,
+            margin_top="15px",
         ),
-
+        
         width="100%",
         background=NAV_BG,
         padding="20px 40px 0 40px",
@@ -503,75 +493,39 @@ def footer():
         width="100%",
         background=NAV_BG,
     )
-    
-#=================================================================================
-# ABOUT
-def about():
 
+# PROTECTED PAGES (Restored)
+# ================================================================================
+def home():
     return rx.vstack(
-
         navbar(),
-
-        rx.center(
-            rx.heading(
-                "About Us",
-                size="8",
-                color=GREEN,
-            ),
-            flex="1",
-        ),
-
+        rx.center(rx.heading("Home Dashboard", size="8", color=GREEN), flex="1"),
         footer(),
-
-        min_height="100vh",
-        background=BG,
+        min_height="100vh", background=BG,
     )
 
-# SERVICES
-# ================================================================================
+def about():
+    return rx.vstack(
+        navbar(),
+        rx.center(rx.heading("About Us", size="8", color=GREEN), flex="1"),
+        footer(),
+        min_height="100vh", background=BG,
+    )
 
 def services():
-
     return rx.vstack(
-
         navbar(),
-
-        rx.center(
-            rx.heading(
-                "Our Services",
-                size="8",
-                color=GREEN,
-            ),
-            flex="1",
-        ),
-
+        rx.center(rx.heading("Our Services", size="8", color=GREEN), flex="1"),
         footer(),
-
-        min_height="100vh",
-        background=BG,
+        min_height="100vh", background=BG,
     )
-    
-# CONTACT
-# ================================================================================
+
 def contact():
-
     return rx.vstack(
-
         navbar(),
-
-        rx.center(
-            rx.heading(
-                "Contact Us",
-                size="8",
-                color=GREEN,
-            ),
-            flex="1",
-        ),
-
+        rx.center(rx.heading("Contact Us", size="8", color=GREEN), flex="1"),
         footer(),
-
-        min_height="100vh",
-        background=BG,
+        min_height="100vh", background=BG,
     )
 
 # LANDING PAGE COMPONENTS
@@ -584,22 +538,23 @@ def landing_hero():
             font_size="6em", 
             font_weight="900", 
             color=TEXT,
-            letter_spacing="-2px"
+            letter_spacing="-2px",
+            margin_bottom="35px", # Creates distance below the heading
         ),
         
-        # Professional summary text replacing the placeholder
+        # Professional summary text
         rx.text(
             "AI-Powered Infrastructure Monitoring & Early Warning System", 
             size="6", 
             color=TEXT, 
             font_weight="bold",
-            margin_top="20px",
+            margin_top="5px",    # <-- Controls spacing above the text
             text_align="center"
         ),
         
         # Blueprint Box Styling
         background=CARD_BG,
-        padding="100px",
+        padding="80px",
         border_radius="30px",
         width="80%",
         max_width="1000px",
@@ -607,7 +562,8 @@ def landing_hero():
         justify_content="center",
         border=f"1px solid {BORDER}",
         box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
-        margin_bottom="20px", # Reduced from 40px to pull everything up
+        margin_top="-10px",  
+        margin_bottom="20px", 
     )
     
 # LANDING PAGE COMPONENTS
@@ -654,7 +610,7 @@ def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str
         align_items="center",
         width="100%",
         max_width="1000px",
-        margin_bottom="100px",
+        margin_bottom="10px",
     )
     
 #=====================================================================================
