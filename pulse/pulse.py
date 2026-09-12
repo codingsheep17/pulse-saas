@@ -506,35 +506,7 @@ def footer():
     )
     
 #=================================================================================
-# main entry point
-# =========================
-
-def index():
-
-    return rx.vstack(
-
-        navbar(),
-                
-        rx.center(
-           
-            auth_card(),
-
-            flex="1",
-            width="100%",
-            padding="40px 20px",
-
-        ),
-
-        footer(),
-
-        min_height="100vh",
-        background=BG,
-
-    )
-
 # ABOUT
-# ================================================================================
-
 def about():
 
     return rx.vstack(
@@ -603,6 +575,99 @@ def contact():
         background=BG,
     )
 
+# LANDING PAGE COMPONENTS
+# ===============================================================================
+
+def landing_hero():
+    return rx.vstack(
+        # Huge PULSE heading
+        rx.heading(
+            "PULSE", 
+            font_size="6em", 
+            font_weight="900", 
+            color=TEXT,
+            letter_spacing="-2px"
+        ),
+        
+        # Summary text
+        rx.text(
+            "shortest summary goes here", 
+            size="6", 
+            color=TEXT, 
+            font_weight="bold",
+            margin_top="20px"
+        ),
+        
+        # Blueprint Box Styling
+        background=CARD_BG,
+        padding="100px",
+        border_radius="30px",
+        width="80%",
+        max_width="1000px",
+        align_items="center",
+        justify_content="center",
+        border=f"1px solid {BORDER}",
+        box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
+        margin_bottom="40px",
+    )
+    
+# LANDING PAGE COMPONENTS
+# ===============================================================================
+def feature_card(title: str, description: str):
+    """Creates a stylized card with a hover animation."""
+    return rx.box(
+        rx.vstack(
+            rx.heading(title, size="6", color=GREEN, margin_bottom="10px"),
+            rx.text(description, color=MUTED, line_height="1.6"),
+            align_items="start",
+        ),
+        background=CARD_BG,
+        padding="40px",
+        border_radius="20px",
+        border=f"1px solid {BORDER}",
+        width=["100%", "100%", "45%"],  # Full width on mobile, 45% on desktop
+        transition="all 0.3s ease",
+        _hover={
+            "transform": "translateY(-10px)",
+            "border_color": GREEN,
+            "box_shadow": "0 10px 30px rgba(183, 227, 107, 0.15)",
+        }
+    )
+    
+
+# main entry point
+# =========================
+
+# MAIN ENTRY POINT (Updated)
+# ===============================================================================
+
+def index():
+    return rx.vstack(
+        navbar(),
+                
+        rx.center(
+            rx.vstack(
+                landing_hero(),
+                
+                # Downward visual indication area
+                rx.text("whole detailed explanation comes", color=MUTED, size="4", weight="bold"),
+                rx.text("down in clear beautiful formatting way", color=MUTED, size="4", weight="bold"),
+                rx.icon(tag="arrow-down", color=TEXT, size=30, margin_top="15px"),
+                
+                align_items="center",
+                width="100%"
+            ),
+            flex="1",
+            width="100%",
+            padding="60px 20px",
+        ),
+
+        footer(),
+
+        min_height="100vh",
+        background=BG,
+    )
+
 # HOME
 # ================================================================================
 
@@ -628,14 +693,40 @@ def home():
     )
 
 
-#app and its paths
+# LOGIN PAGE
+# ===============================================================================
+def login_page():
+    return rx.vstack(
+        navbar(),
+        rx.center(
+            auth_card(),
+            flex="1",
+            width="100%",
+            padding="40px 20px",
+        ),
+        footer(),
+        min_height="100vh",
+        background=BG,
+    )
+
+# ===============================================================================
+# APP ROUTING
+# ===============================================================================
+
+# app and its paths
 app = rx.App(
+    style=PULSE_STYLE,  #global colors apply
     head_components=[
         rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit", async_=True, defer=True)
     ]
 )
-app.add_page(index, route="/", on_load=rx.call_script("setTimeout(renderCaptcha, 200);"))
-app.add_page(home, route="/home", on_load=AuthState.check_auth,)
-app.add_page(about,route="/about",on_load=AuthState.check_auth,)
-app.add_page(services,route="/services",on_load=AuthState.check_auth,)
-app.add_page(contact,route="/contact",on_load=AuthState.check_auth,)
+
+# Landing page (No CAPTCHA needed here)
+app.add_page(index, route="/")
+# Login page (CAPTCHA script moved here)
+app.add_page(login_page, route="/login", on_load=rx.call_script("setTimeout(renderCaptcha, 200);"))
+# Protected pages
+app.add_page(home, route="/home", on_load=AuthState.check_auth)
+app.add_page(about, route="/about", on_load=AuthState.check_auth)
+app.add_page(services, route="/services", on_load=AuthState.check_auth)
+app.add_page(contact, route="/contact", on_load=AuthState.check_auth)
