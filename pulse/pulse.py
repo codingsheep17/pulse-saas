@@ -434,10 +434,9 @@ def footer():
         ),
 
         rx.box(
-
             # LEFT
             rx.text(
-                "© sheep",
+                "© Pulse",
                 color=GREEN,
                 position="absolute",
                 left="40px",
@@ -577,7 +576,6 @@ def contact():
 
 # LANDING PAGE COMPONENTS
 # ===============================================================================
-
 def landing_hero():
     return rx.vstack(
         # Huge PULSE heading
@@ -625,7 +623,7 @@ def feature_card(title: str, description: str):
         padding="40px",
         border_radius="20px",
         border=f"1px solid {BORDER}",
-        width=["100%", "100%", "45%"],  # Full width on mobile, 45% on desktop
+        width=["45%"],  #45% on desktop (will add the phn later)
         transition="all 0.3s ease",
         _hover={
             "transform": "translateY(-10px)",
@@ -640,8 +638,7 @@ def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str
         rx.heading(text_title, size="7", color=TEXT, margin_bottom="10px"),
         rx.text(text_desc, color=MUTED, size="4", line_height="1.6"),
         align_items="start",
-        width=["100%", "100%", "45%"],
-        padding_y=["20px", "20px", "0px"], # Adds spacing on mobile
+        width=["45%"],
     )
     
     card_section = feature_card(card_title, card_desc)
@@ -651,7 +648,7 @@ def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str
     
     return rx.flex(
         *items,
-        direction=["column", "column", "row"], # Stacks vertically on mobile, horizontally on desktop
+        direction="row", # horizontally on desktop
         justify_content="space-between",
         align_items="center",
         width="100%",
@@ -662,7 +659,7 @@ def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str
 def landing_features():
     """Assembles all the features in the requested zigzag pattern."""
     return rx.vstack(
-        # 1. Right Card: RAM
+        # Right Card: RAM
         feature_row(
             "Memory Optimization", 
             "Track memory allocation in real-time. Pulse monitors active processes to prevent out-of-memory crashes before they happen.",
@@ -670,7 +667,7 @@ def landing_features():
             "Live monitoring of volatile memory consumption across all your infrastructure.",
             card_on_left=False
         ),
-        # 2. Left Card: CPU
+        # Left Card: CPU
         feature_row(
             "Processing Power",
             "Analyze thread loads and processor bottlenecks. Identify rogue processes consuming too many cycles.",
@@ -678,7 +675,7 @@ def landing_features():
             "Per-core performance metrics and historical load analysis.",
             card_on_left=True
         ),
-        # 3. Right Card: GPU
+        # Right Card: GPU
         feature_row(
             "Hardware Acceleration",
             "Keep an eye on compute-heavy workloads. Perfect for AI and machine learning infrastructure monitoring.",
@@ -686,7 +683,7 @@ def landing_features():
             "VRAM allocation, core temperature, and compute utilization tracking.",
             card_on_left=False
         ),
-        # 4. Left Card: Network
+        # Left Card: Network
         feature_row(
             "Network Throughput",
             "Detect unusual spikes in inbound or outbound traffic that could indicate a breach or a DDoS attempt.",
@@ -694,7 +691,7 @@ def landing_features():
             "Real-time bandwidth monitoring and packet loss detection.",
             card_on_left=True
         ),
-        # 5. Right Card: Early Warning (Product Vision)
+        # Right Card: Early Warning (Product Vision)
         feature_row(
             "AI Early Warning",
             "Pulse doesn't just show graphs. It learns your system's baseline and alerts you to anomalies instantly.",
@@ -707,12 +704,8 @@ def landing_features():
         padding_top="60px",
     )
 
-# main entry point
-# =========================
-
 # MAIN ENTRY POINT (Updated)
 # ===============================================================================
-
 def index():
     return rx.vstack(
         navbar(),
@@ -721,10 +714,11 @@ def index():
             rx.vstack(
                 landing_hero(),
                 
-                # Downward visual indication area
-                rx.text("whole detailed explanation comes", color=MUTED, size="4", weight="bold"),
-                rx.text("down in clear beautiful formatting way", color=MUTED, size="4", weight="bold"),
-                rx.icon(tag="arrow-down", color=TEXT, size=30, margin_top="15px"),
+                # Visual transition arrow
+                rx.icon(tag="arrow-down", color=TEXT, size=40, margin_bottom="60px"),
+                
+                # THIS IS THE MISSING PIECE! We are plugging your features in here:
+                landing_features(),
                 
                 align_items="center",
                 width="100%"
@@ -742,7 +736,6 @@ def index():
 
 # HOME
 # ================================================================================
-
 def home():
 
     return rx.vstack(
@@ -783,7 +776,6 @@ def login_page():
 
 # ===============================================================================
 # APP ROUTING
-# ===============================================================================
 
 # app and its paths
 app = rx.App(
