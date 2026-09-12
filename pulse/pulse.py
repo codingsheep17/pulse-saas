@@ -633,7 +633,31 @@ def feature_card(title: str, description: str):
             "box_shadow": "0 10px 30px rgba(183, 227, 107, 0.15)",
         }
     )
+
+def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str, card_on_left: bool = False):
+    """Creates a zigzag row with text on one side and a card on the other."""
+    text_section = rx.vstack(
+        rx.heading(text_title, size="7", color=TEXT, margin_bottom="10px"),
+        rx.text(text_desc, color=MUTED, size="4", line_height="1.6"),
+        align_items="start",
+        width=["100%", "100%", "45%"],
+        padding_y=["20px", "20px", "0px"], # Adds spacing on mobile
+    )
     
+    card_section = feature_card(card_title, card_desc)
+    
+    # Determine the order based on the card_on_left flag
+    items = [card_section, text_section] if card_on_left else [text_section, card_section]
+    
+    return rx.flex(
+        *items,
+        direction=["column", "column", "row"], # Stacks vertically on mobile, horizontally on desktop
+        justify_content="space-between",
+        align_items="center",
+        width="100%",
+        max_width="1000px",
+        margin_bottom="100px",
+    )
 
 # main entry point
 # =========================
