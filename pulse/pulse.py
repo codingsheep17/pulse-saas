@@ -658,6 +658,54 @@ def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str
         max_width="1000px",
         margin_bottom="100px",
     )
+    
+def landing_features():
+    """Assembles all the features in the requested zigzag pattern."""
+    return rx.vstack(
+        # 1. Right Card: RAM
+        feature_row(
+            "Memory Optimization", 
+            "Track memory allocation in real-time. Pulse monitors active processes to prevent out-of-memory crashes before they happen.",
+            "RAM Usage", 
+            "Live monitoring of volatile memory consumption across all your infrastructure.",
+            card_on_left=False
+        ),
+        # 2. Left Card: CPU
+        feature_row(
+            "Processing Power",
+            "Analyze thread loads and processor bottlenecks. Identify rogue processes consuming too many cycles.",
+            "CPU Usage",
+            "Per-core performance metrics and historical load analysis.",
+            card_on_left=True
+        ),
+        # 3. Right Card: GPU
+        feature_row(
+            "Hardware Acceleration",
+            "Keep an eye on compute-heavy workloads. Perfect for AI and machine learning infrastructure monitoring.",
+            "GPU Usage",
+            "VRAM allocation, core temperature, and compute utilization tracking.",
+            card_on_left=False
+        ),
+        # 4. Left Card: Network
+        feature_row(
+            "Network Throughput",
+            "Detect unusual spikes in inbound or outbound traffic that could indicate a breach or a DDoS attempt.",
+            "Network I/O",
+            "Real-time bandwidth monitoring and packet loss detection.",
+            card_on_left=True
+        ),
+        # 5. Right Card: Early Warning (Product Vision)
+        feature_row(
+            "AI Early Warning",
+            "Pulse doesn't just show graphs. It learns your system's baseline and alerts you to anomalies instantly.",
+            "Anomaly Detection",
+            "Machine learning powered alerts for behavioral deviations.",
+            card_on_left=False
+        ),
+        width="100%",
+        align_items="center",
+        padding_top="60px",
+    )
 
 # main entry point
 # =========================
