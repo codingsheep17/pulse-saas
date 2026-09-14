@@ -256,159 +256,157 @@ def navbar():
     )
 
 #================================================================================
-# AUTH CARD
-# ========================
-def auth_card():
-
-    return rx.box(
-
-        rx.vstack(
-
-            rx.heading(
-                "Welcome to sheep",
-                size="8",
-                color=TEXT,
-                text_align="center",
-            ),
-
-            rx.text(
-                "Login or SignUp",
-                color=MUTED,
-                text_align="center",
-            ),
-
-            rx.input(
-                placeholder="Email",
-                type="email",
-                width="100%",
-                background="#252D29",
-                border_color=BORDER,
-                value=AuthState.email,
-                on_change=AuthState.set_email,
-            ),
-
-            rx.input(
-                placeholder="Password",
-                type="password",
-                width="100%",
-                background="#252D29",
-                border_color=BORDER,
-                value=AuthState.password,
-                on_change=AuthState.set_password,
-            ),
-            rx.cond(
+# AUTHENTICATION COMPONENTS (Split into 3 columns for scrollable.png blueprint)
+# ===============================================================================
+def signup_card():
+    return rx.vstack(
+        rx.heading("signup", size="8", color=TEXT, margin_bottom="20px"),
+        
+        rx.input(placeholder="name (optional)", width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        
+        # Bound exactly to your existing AuthState
+        rx.input(placeholder="email (mandatory)", type="email", value=AuthState.email, on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        rx.input(placeholder="password (mandatory)", type="password", value=AuthState.password, on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        
+        rx.button("signup", on_click=AuthState.signup, width="100%", variant="outline", border_color=GREEN, color=GREEN, margin_top="10px"),
+        
+        # Your existing message logic
+        rx.cond(
             AuthState.message != "",
             rx.text(
                 AuthState.message,
-                color=rx.cond(
-                    AuthState.message_type == "success",
-                    GREEN,
-                    YELLOW,
-                    ),
+                color=rx.cond(AuthState.message_type == "success", GREEN, YELLOW),
                 text_align="center",
-                ),
             ),
-            #adding the captcha here 
-            
-            #Load the official Cloudflare library securely
-            rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js", async_=True, defer=True),
-            
-            #Define the global success callback so Cloudflare can save the token
-            rx.script(
-                f"""
-                function renderCaptcha() {{
-                    // Only run if Cloudflare is loaded and our div exists
-                    if (window.turnstile && document.getElementById('my-captcha-box')) {{
-                        
-                        // GARBAGE COLLECTION: Destroy the old ghost widget if it exists
-                        if (window.pulseWidgetId !== undefined) {{
-                            try {{ window.turnstile.remove(window.pulseWidgetId); }} catch(e) {{}}
-                        }}
-                        
-                        // Render a fresh widget and save its unique ID
-                        window.pulseWidgetId = window.turnstile.render('#my-captcha-box', {{
-                            sitekey: '{TURNSTILE_SITE_KEY}',
-                            theme: 'dark',
-                            callback: function(token) {{
-                                window.turnstileToken = token;
-                                console.log("CAPTCHA Passed! Token saved.");
-                            }}
-                        }});
-                    }}
-                }}
-                """
-            ),
-            
-            # The actual container
-            rx.html('<div id="my-captcha-box"></div>'),
-
-            #Cloudflare automatically finds this div and renders the CAPTCHA
-            rx.html(
-                f"""
-                <div class="cf-turnstile" 
-                     data-sitekey="{TURNSTILE_SITE_KEY}" 
-                     data-callback="onTurnstileSuccess" 
-                     data-theme="dark">
-                </div>
-                """
-            ),
-            
-            rx.button(
-                "Login",
-                width="100%",
-                background=GREEN,
-                color=BG,
-                on_click=rx.call_script(
-                "window.turnstileToken || ''",
-                callback=AuthState.login,
-                ),
-            ),
-
-            rx.divider(
-                color=BORDER,
-            ),
-
-            rx.button(
-                "Continue with Google",
-                width="100%",
-                variant="outline",
-                border_color=YELLOW,
-                color=YELLOW,
-                on_click=AuthState.google_login,
-            ),
-
-            rx.text(
-                "Don't have an account?",
-                color=MUTED,
-            ),
-
-            rx.button(
-                "SignUp",
-                width="100%",
-                variant="outline",
-                border_color=GREEN,
-                color=GREEN,
-                on_click=AuthState.signup,
-            ),
-
-            spacing="5",
-            width="100%",
-
         ),
-
-        width="420px",
-        padding="38px",
-
+        
+        width="350px",
+        padding="40px",
         background=CARD_BG,
-
         border="1px solid",
         border_color=BORDER,
-
         border_radius="20px",
-
         box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
     )
 
+
+def auth_middle_section():
+    return rx.vstack(
+        rx.button("Continue with Google", on_click=AuthState.google_login, width="100%", variant="outline", border_color=YELLOW, color=YELLOW),
+        
+        # ==========================================
+        # YOUR CLOUDFLARE CAPTCHA LOGIC (Preserved perfectly)
+        # ==========================================
+        rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js", async_=True, defer=True),
+        rx.script(
+            f"""
+            function renderCaptcha() {{
+                if (window.turnstile && document.getElementById('my-captcha-box')) {{
+                    if (window.pulseWidgetId !== undefined) {{
+                        try {{ window.turnstile.remove(window.pulseWidgetId); }} catch(e) {{}}
+                    }}
+                    window.pulseWidgetId = window.turnstile.render('#my-captcha-box', {{
+                        sitekey: '{TURNSTILE_SITE_KEY}',
+                        theme: 'dark',
+                        callback: function(token) {{
+                            window.turnstileToken = token;
+                            console.log("CAPTCHA Passed! Token saved.");
+                        }}
+                    }});
+                }}
+            }}
+            """
+        ),
+        rx.html('<div id="my-captcha-box"></div>'),
+        rx.html(
+            f"""
+            <div class="cf-turnstile" 
+                 data-sitekey="{TURNSTILE_SITE_KEY}" 
+                 data-callback="onTurnstileSuccess" 
+                 data-theme="dark">
+            </div>
+            """
+        ),
+        # ==========================================
+        
+        rx.link("forgot pass?", color=MUTED, margin_top="15px"),
+        
+        align_items="center",
+        justify_content="center",
+        width="280px",
+        spacing="6",
+    )
+
+
+def login_card():
+    return rx.vstack(
+        rx.heading("login", size="8", color=TEXT, margin_bottom="20px"),
+        
+        # Bound exactly to your existing AuthState
+        rx.input(placeholder="gmail", type="email", value=AuthState.email, on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        rx.input(placeholder="password", type="password", value=AuthState.password, on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        
+        # Your exact login button with the CAPTCHA callback
+        rx.button(
+            "Login",
+            width="100%",
+            background=GREEN,
+            color=BG,
+            margin_top="10px",
+            on_click=rx.call_script(
+                "window.turnstileToken || ''",
+                callback=AuthState.login,
+            ),
+        ),
+        
+        # Your existing message logic
+        rx.cond(
+            AuthState.message != "",
+            rx.text(
+                AuthState.message,
+                color=rx.cond(AuthState.message_type == "success", GREEN, YELLOW),
+                text_align="center",
+            ),
+        ),
+        
+        width="350px",
+        padding="40px",
+        background=CARD_BG,
+        border="1px solid",
+        border_color=BORDER,
+        border_radius="20px",
+        box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
+    )
+
+# ===============================================================================
+# LOGIN PAGE ASSEMBLY
+# ===============================================================================
+def login_page():
+    return rx.vstack(
+        navbar(),
+        
+        rx.center(
+            # The FLEX container lines up our 3 separate sections horizontally!
+            rx.flex(
+                signup_card(),
+                auth_middle_section(),
+                login_card(),
+                direction="row",  # This makes them sit side-by-side
+                spacing="8",
+                align_items="center",
+                justify_content="center",
+                width="100%",
+                max_width="1200px"
+            ),
+            flex="1",
+            width="100%",
+            padding="40px 20px",
+        ),
+        
+        footer(),
+        min_height="100vh",
+        background=BG,
+    )
 #================================================================================
 # FOOTER
 # =========================
@@ -693,23 +691,6 @@ def home():
 
         footer(),
 
-        min_height="100vh",
-        background=BG,
-    )
-
-
-# LOGIN PAGE
-# ===============================================================================
-def login_page():
-    return rx.vstack(
-        navbar(),
-        rx.center(
-            auth_card(),
-            flex="1",
-            width="100%",
-            padding="40px 20px",
-        ),
-        footer(),
         min_height="100vh",
         background=BG,
     )
