@@ -48,8 +48,12 @@ class AuthState(rx.State):
     email: str = ""
     password: str = ""
 
-    message: str = ""
-    message_type: str = ""   # "success" or "error"
+    # NEW: Separated message states!
+    login_message: str = ""
+    login_message_type: str = ""
+    
+    signup_message: str = ""
+    signup_message_type: str = ""
     
     #captcha vars
     turnstile_token: str = ""
@@ -85,13 +89,13 @@ class AuthState(rx.State):
     def login(self, token: str):
         
         if not token:
-            self.message = "Please complete the CAPTCHA."
-            self.message_type = "error"
+            self.login_message = "Please complete the CAPTCHA."
+            self.login_message_type = "error"
             return
             
         if not self.email or not self.password:
-            self.message = "Please enter your email and password."
-            self.message_type = "error"
+            self.login_message = "Please enter your email and password."
+            self.login_message_type = "error"
             return
 
         try:
@@ -101,15 +105,15 @@ class AuthState(rx.State):
             })
 
             self.is_authenticated = True
-            self.message = "Login successful!"
-            self.message_type = "success"
+            self.login_message = "Login successful!"
+            self.login_message_type = "success"
 
             return rx.redirect("/home")
 
         except Exception:
             self.is_authenticated = False
-            self.message = "Incorrect email or password."
-            self.message_type = "error"
+            self.login_message = "Incorrect email or password."
+            self.login_message_type = "error"
 
     @rx.event
     def signup(self):
@@ -117,18 +121,18 @@ class AuthState(rx.State):
         current_time = time.time()
         if current_time - self.last_signup_attempt < 60:
             remaining = int(60 - (current_time - self.last_signup_attempt))
-            self.message = f"Please wait {remaining} seconds before requesting another email."
-            self.message_type = "error"
+            self.signup_message = f"Please wait {remaining} seconds before requesting another email."
+            self.signup_message_type = "error"
             return
 
         if not self.email or not self.password:
-            self.message = "Please enter your email and password."
-            self.message_type = "error"
+            self.signup_message = "Please enter your email and password."
+            self.signup_message_type = "error"
             return
 
         if len(self.password) < 6:
-            self.message = "Password must be at least 6 characters."
-            self.message_type = "error"
+            self.signup_message = "Password must be at least 6 characters."
+            self.signup_message_type = "error"
             return
 
         try:
@@ -141,45 +145,38 @@ class AuthState(rx.State):
 
             #check for existing accounts (Supabase empty identities array check)
             if response.user and getattr(response.user, "identities", None) == []:
-                self.message = "This email is already registered. Please log in."
-                self.message_type = "error"
+                self.signup_message = "This email is already registered. Please log in."
+                self.signup_message_type = "error"
             elif response.user and response.session is None:
-                self.message = "Registration successful! Check your email to verify your account."
-                self.message_type = "success"
+                self.signup_message = "Registration successful! Check your email to verify your account."
+                self.signup_message_type = "success"
             else:
-                self.message = "Account created successfully!"
-                self.message_type = "success"
+                self.signup_message = "Account created successfully!"
+                self.signup_message_type = "success"
 
         except Exception as e:
             error_msg = str(e).lower()
             if "rate limit" in error_msg or "too many requests" in error_msg:
-                self.message = "Too many requests. Please wait a moment before trying again."
+                self.signup_message = "Too many requests. Please wait a moment before trying again."
             else:
-                self.message = str(e)
-            self.message_type = "error"
+                self.signup_message = str(e)
+            self.signup_message_type = "error"
 
     @rx.event
     def logout(self):
-        try:
-            supabase.auth.sign_out()
+        # 1. Clear backend state instantly
+        self.is_authenticated = False
+        self.login_message = ""
+        self.signup_message = ""
+        self.email = ""
+        self.password = ""
+        self.turnstile_token = ""
 
-            # 1. Clear backend state completely
-            self.is_authenticated = False
-            self.message = ""
-            self.message_type = ""
-            self.email = ""
-            self.password = ""
-            self.turnstile_token = ""
-
-            # 2. Tell Reflex to do TWO things simultaneously: clear the JS token AND redirect
-            return [
-                rx.call_script("window.turnstileToken = null;"),
-                rx.redirect("/")
-            ]
-
-        except Exception as e:
-            self.message = "Logout failed."
-            self.message_type = "error"
+        # 2. Fire client-side script to wipe token and redirect immediately
+        return [
+            rx.call_script("window.turnstileToken = null;"),
+            rx.redirect("/")
+        ]
 
 
     def google_login(self):
@@ -264,19 +261,34 @@ def signup_card():
         
         rx.input(placeholder="name (optional)", width="100%", background="#252D29", border_color=BORDER, color=TEXT),
         
-        # Bound exactly to your existing AuthState
-        rx.input(placeholder="email (mandatory)", type="email", value=AuthState.email, on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
-        rx.input(placeholder="password (mandatory)", type="password", value=AuthState.password, on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        # REMOVED: value=AuthState.email and value=AuthState.password
+        rx.input(placeholder="email (mandatory)", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        rx.input(placeholder="password (mandatory)", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
         
-        rx.button("signup", on_click=AuthState.signup, width="100%", variant="outline", border_color=GREEN, color=GREEN, margin_top="10px"),
+        rx.button(
+            "signup",
+            on_click=AuthState.signup,
+            width="100%",
+            background=BG,                 
+            color=TEXT,
+            border=f"1px solid {BORDER}",  
+            margin_top="10px",
+            padding="20px",
+            cursor="pointer",
+            transition="all 0.2s ease",
+            _hover={
+                "background": GREEN,       
+                "color": BG,
+                "border_color": GREEN,
+            },
+        ),
         
-        # Your existing message logic
         rx.cond(
-            AuthState.message != "",
+            AuthState.signup_message != "",
             rx.text(
-                AuthState.message,
-                color=rx.cond(AuthState.message_type == "success", GREEN, YELLOW),
-                text_align="center",
+                AuthState.signup_message, 
+                color=rx.cond(AuthState.signup_message_type == "success", GREEN, YELLOW), 
+                text_align="center"
             ),
         ),
         
@@ -289,13 +301,12 @@ def signup_card():
         box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
     )
 
-
 def auth_middle_section():
     return rx.vstack(
         rx.button("Continue with Google", on_click=AuthState.google_login, width="100%", variant="outline", border_color=YELLOW, color=YELLOW),
         
         # ==========================================
-        # YOUR CLOUDFLARE CAPTCHA LOGIC (Preserved perfectly)
+        # CLOUDFLARE CAPTCHA LOGIC (Fixed: Only one box now!)
         # ==========================================
         rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js", async_=True, defer=True),
         rx.script(
@@ -317,19 +328,11 @@ def auth_middle_section():
             }}
             """
         ),
+        # This is the ONLY target box we need
         rx.html('<div id="my-captcha-box"></div>'),
-        rx.html(
-            f"""
-            <div class="cf-turnstile" 
-                 data-sitekey="{TURNSTILE_SITE_KEY}" 
-                 data-callback="onTurnstileSuccess" 
-                 data-theme="dark">
-            </div>
-            """
-        ),
         # ==========================================
         
-        rx.link("forgot pass?", color=MUTED, margin_top="15px"),
+        rx.link("forgot pass?", color=MUTED, margin_top="15px", _hover={"color": GREEN}),
         
         align_items="center",
         justify_content="center",
@@ -342,30 +345,37 @@ def login_card():
     return rx.vstack(
         rx.heading("login", size="8", color=TEXT, margin_bottom="20px"),
         
-        # Bound exactly to your existing AuthState
-        rx.input(placeholder="gmail", type="email", value=AuthState.email, on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
-        rx.input(placeholder="password", type="password", value=AuthState.password, on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        # REMOVED: value=AuthState.email and value=AuthState.password
+        rx.input(placeholder="gmail", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        rx.input(placeholder="password", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
         
-        # Your exact login button with the CAPTCHA callback
         rx.button(
             "Login",
             width="100%",
-            background=GREEN,
-            color=BG,
+            background=BG,                 
+            color=TEXT,
+            border=f"1px solid {BORDER}",  
             margin_top="10px",
+            padding="20px",
+            cursor="pointer",
+            transition="all 0.2s ease",
+            _hover={
+                "background": GREEN,       
+                "color": BG,
+                "border_color": GREEN,
+            },
             on_click=rx.call_script(
                 "window.turnstileToken || ''",
                 callback=AuthState.login,
             ),
         ),
         
-        # Your existing message logic
         rx.cond(
-            AuthState.message != "",
+            AuthState.login_message != "",
             rx.text(
-                AuthState.message,
-                color=rx.cond(AuthState.message_type == "success", GREEN, YELLOW),
-                text_align="center",
+                AuthState.login_message, 
+                color=rx.cond(AuthState.login_message_type == "success", GREEN, YELLOW), 
+                text_align="center"
             ),
         ),
         
