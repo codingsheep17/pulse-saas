@@ -543,8 +543,8 @@ def landing_hero():
         # Blueprint Box Styling
         width="80%",
         max_width="1000px",
-        margin_top="25px",       
-        margin_bottom="20px", 
+        margin_top="-25px",       
+        margin_bottom="0px", 
         box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
         border=f"1px solid {BORDER}",
         border_radius="30px",
@@ -553,20 +553,22 @@ def landing_hero():
     
 # LANDING PAGE COMPONENTS
 # ===============================================================================
-def feature_card(title: str, description: str):
-    """Creates a stylized card with a hover animation."""
+def feature_card(image_path: str):
+    """Creates a stylized card displaying a full-bleed image with a hover animation."""
     return rx.box(
-        rx.vstack(
-            rx.heading(title, size="6", color=GREEN, margin_bottom="10px"),
-            rx.text(description, color=MUTED, line_height="1.6"),
-            align_items="start",
+        rx.image(
+            src=image_path,
+            width="100%",
+            height="auto",
+            # The image naturally fills the box now!
         ),
         background=CARD_BG,
-        padding="40px",
+        # padding="40px"  <-- REMOVED so the image touches the edges
         border_radius="20px",
         border=f"1px solid {BORDER}",
-        width=["45%"],  #45% on desktop (will add the phn later)
+        width="45%",  
         transition="all 0.3s ease",
+        overflow="hidden", # <-- CRITICAL: Forces the image to respect the rounded corners!
         _hover={
             "transform": "translateY(-10px)",
             "border_color": GREEN,
