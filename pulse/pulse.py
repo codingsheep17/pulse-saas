@@ -533,37 +533,22 @@ def contact():
 def landing_hero():
     return rx.vstack(
         # Huge PULSE heading
-        rx.heading(
-            "PULSE", 
-            font_size="6em", 
-            font_weight="900", 
-            color=TEXT,
-            letter_spacing="-2px",
-            margin_bottom="35px", # Creates distance below the heading
-        ),
-        
-        # Professional summary text
-        rx.text(
-            "AI-Powered Infrastructure Monitoring & Early Warning System", 
-            size="6", 
-            color=TEXT, 
-            font_weight="bold",
-            margin_top="5px",    # <-- Controls spacing above the text
-            text_align="center"
+        rx.image(
+            src="/hero_card.png",  # Points to assets/hero_card.png
+            width="100%",
+            height="auto",
+            border_radius="30px",  # Curves the image edges to match the box
         ),
         
         # Blueprint Box Styling
-        background=CARD_BG,
-        padding="80px",
-        border_radius="30px",
         width="80%",
         max_width="1000px",
-        align_items="center",
-        justify_content="center",
-        border=f"1px solid {BORDER}",
-        box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
-        margin_top="-10px",  
+        margin_top="25px",       
         margin_bottom="20px", 
+        box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
+        border=f"1px solid {BORDER}",
+        border_radius="30px",
+        background=CARD_BG,
     )
     
 # LANDING PAGE COMPONENTS
