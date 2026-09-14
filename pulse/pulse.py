@@ -560,15 +560,15 @@ def feature_card(image_path: str):
             src=image_path,
             width="100%",
             height="auto",
-            # The image naturally fills the box now!
+            # The image naturally fills the box now
         ),
         background=CARD_BG,
-        # padding="40px"  <-- REMOVED so the image touches the edges
+
         border_radius="20px",
         border=f"1px solid {BORDER}",
         width="45%",  
         transition="all 0.3s ease",
-        overflow="hidden", # <-- CRITICAL: Forces the image to respect the rounded corners!
+        overflow="hidden", #CRITICAL: Forces the image to respect the rounded corners
         _hover={
             "transform": "translateY(-10px)",
             "border_color": GREEN,
@@ -576,28 +576,28 @@ def feature_card(image_path: str):
         }
     )
 
-def feature_row(text_title: str, text_desc: str, card_title: str, card_desc: str, card_on_left: bool = False):
-    """Creates a zigzag row with text on one side and a card on the other."""
+def feature_row(text_title: str, text_desc: str, image_path: str, card_on_left: bool = False):
+    """Creates a zigzag row with text on one side and an image card on the other."""
     text_section = rx.vstack(
         rx.heading(text_title, size="7", color=TEXT, margin_bottom="10px"),
         rx.text(text_desc, color=MUTED, size="4", line_height="1.6"),
         align_items="start",
-        width=["45%"],
+        width="45%", 
     )
     
-    card_section = feature_card(card_title, card_desc)
+    # We now pass the image_path instead of title/description
+    card_section = feature_card(image_path)
     
-    # Determine the order based on the card_on_left flag
     items = [card_section, text_section] if card_on_left else [text_section, card_section]
     
     return rx.flex(
         *items,
-        direction="row", # horizontally on desktop
+        direction="row",
         justify_content="space-between",
         align_items="center",
         width="100%",
         max_width="1000px",
-        margin_bottom="10px",
+        margin_bottom="50px", 
     )
     
 #=====================================================================================
