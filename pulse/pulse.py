@@ -202,7 +202,6 @@ def navbar():
                 # WHAT LOGGED IN USERS SEE: Links + Logout Button
                 rx.hstack(
                     rx.link("Home", href="/home", color=TEXT),
-                    rx.link("About", href="/about", color=TEXT),
                     rx.link("Services", href="/services", color=TEXT),
                     rx.link("Contact", href="/contact", color=TEXT),
                     rx.button(
@@ -512,14 +511,6 @@ def home():
         min_height="100vh", background=BG,
     )
 
-def about():
-    return rx.vstack(
-        navbar(),
-        rx.center(rx.heading("About Us", size="8", color=GREEN), flex="1"),
-        footer(),
-        min_height="100vh", background=BG,
-    )
-
 def services():
     return rx.vstack(
         navbar(),
@@ -722,6 +713,5 @@ app.add_page(index, route="/")
 app.add_page(login_page, route="/login", on_load=rx.call_script("setTimeout(renderCaptcha, 200);"))
 # Protected pages
 app.add_page(home, route="/home", on_load=AuthState.check_auth)
-app.add_page(about, route="/about", on_load=AuthState.check_auth)
 app.add_page(services, route="/services", on_load=AuthState.check_auth)
 app.add_page(contact, route="/contact", on_load=AuthState.check_auth)
