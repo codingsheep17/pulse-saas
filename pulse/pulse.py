@@ -167,7 +167,9 @@ class AuthState(rx.State):
         # 1. Clear backend state instantly
         self.is_authenticated = False
         self.login_message = ""
+        self.login_message_type = ""
         self.signup_message = ""
+        self.signup_message_type = "e"
         self.email = ""
         self.password = ""
         self.turnstile_token = ""
@@ -522,24 +524,26 @@ def services():
 @rx.page(route="/contact", title="Contact | Pulse")
 def contact_page():
     return rx.vstack(
-        navbar(),  # The top bread
+        navbar(),  
         
+        # The Layout Wrapper: Takes up all available width to center its content
         rx.center(
-            # The Main Card Container
+            
+            # The Actual Contact Card
             rx.vstack(
-                # Heading and Text at the top of the card
                 rx.heading("Get in Touch", size="8", color=TEXT, margin_bottom="10px"),
                 rx.text("Have questions about Pulse? Send us a message.", color=MUTED, margin_bottom="30px", text_align="center"),
                 
-                # Form Inputs with CONSTANT Yellow Glow, GREEN on Hover
+                # Form Inputs
                 rx.input(
                     placeholder="Your Name", 
                     width="100%", 
+                    height="45px",
                     background="rgba(37, 45, 41, 0.85)", 
                     color=TEXT, 
                     padding="15px",
-                    border_color=YELLOW,                     # Constant yellow border
-                    box_shadow=f"0 0 8px {YELLOW}",         # Constant yellow glow
+                    border_color=YELLOW,
+                    box_shadow=f"0 0 8px {YELLOW}",
                     transition="all 0.3s ease",
                     _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
                     _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
@@ -548,11 +552,12 @@ def contact_page():
                     placeholder="Your Email", 
                     type="email", 
                     width="100%", 
+                    height="45px",
                     background="rgba(37, 45, 41, 0.85)", 
                     color=TEXT, 
                     padding="15px",
-                    border_color=YELLOW,                     # Constant yellow border
-                    box_shadow=f"0 0 8px {YELLOW}",         # Constant yellow glow
+                    border_color=YELLOW,
+                    box_shadow=f"0 0 8px {YELLOW}",
                     transition="all 0.3s ease",
                     _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
                     _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
@@ -564,14 +569,13 @@ def contact_page():
                     color=TEXT, 
                     padding="15px", 
                     min_height="120px",
-                    border_color=YELLOW,                     # Constant yellow border
-                    box_shadow=f"0 0 8px {YELLOW}",         # Constant yellow glow
+                    border_color=YELLOW,
+                    box_shadow=f"0 0 8px {YELLOW}",
                     transition="all 0.3s ease",
                     _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
                     _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
                 ),
                 
-                # Submit Button turns Green on Hover
                 rx.button(
                     "Send Message",
                     width="100%",
@@ -590,37 +594,35 @@ def contact_page():
                     },
                 ),
                 
+                # --- CARD SIZING & BACKGROUND (Moved here!) ---
                 width="100%",
-                height="100%",
+                max_width="480px",
+                height="75vh",
+                max_height="700px",
                 padding="40px",
                 justify_content="center", 
                 align_items="center",
+                
+                background_image="url('/contact_card.png')",
+                background_size="cover",
+                background_position="center",
+                
+                border=f"1px solid {BORDER}",
+                border_radius="20px",
+                box_shadow="0 20px 60px rgba(0, 0, 0, 0.6)",
+                overflow="hidden",
             ),
             
-            # --- CONTAINER SIZING & CANVA BACKGROUND ---
+            # --- WRAPPER PROPERTIES ---
             width="100%",
-            max_width="480px",       
-            height="75vh",           
-            max_height="700px",      
-            
-            background_image="url('/contact_card.png')",
-            background_size="cover",
-            background_position="center",
-            
-            border="1px solid",
-            border_color=BORDER,
-            border_radius="20px",
-            box_shadow="0 20px 60px rgba(0, 0, 0, 0.6)",
-            overflow="hidden",       
-            margin_y="20px",
-            
-            flex="1", # This tells the center container to fill the space between navbar and footer!
-            width="100%",
+            flex="1", 
         ),
         
-        footer(),  # The bottom bread
+        footer(),  
         
+        # --- PAGE PROPERTIES ---
         min_height="100vh",
+        width="100%",
         background=BG,
     )
 
