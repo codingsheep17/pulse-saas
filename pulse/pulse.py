@@ -86,9 +86,10 @@ class AuthState(rx.State):
         self.turnstile_token = token
         
     @rx.event
-    def login(self, token: str):
-        
-        if not token:
+    def login(self, turnstile_token: str = ""):
+        self.login_message = ""
+        self.login_message_type = ""
+        if not turnstile_token:
             self.login_message = "Please complete the CAPTCHA."
             self.login_message_type = "error"
             return
@@ -117,6 +118,8 @@ class AuthState(rx.State):
 
     @rx.event
     def signup(self):
+        self.signup_message = ""
+        self.signup_message_type = ""
         #cooldown Timer (60 seconds)
         current_time = time.time()
         if current_time - self.last_signup_attempt < 60:
@@ -180,6 +183,17 @@ class AuthState(rx.State):
             rx.redirect("/")
         ]
 
+    #==================================================================================
+    #msgs and info reset
+    def reset_auth_state(self):
+            """Wipes all inputs and messages clean when visiting the login page."""
+            self.email = ""
+            self.password = ""
+            self.login_message = ""
+            self.login_message_type = ""
+            self.signup_message = ""
+            self.signup_message_type = ""
+            self.turnstile_token = ""
 
     def google_login(self):
         try:
@@ -190,6 +204,7 @@ class AuthState(rx.State):
         except Exception as e:
             self.message = "Google login failed."
             self.message_type = "error"
+
     
 # NAVBAR
 # ===============================================================================
@@ -392,7 +407,8 @@ def login_card():
 # ===============================================================================
 # LOGIN PAGE ASSEMBLY
 # ===============================================================================
-def login_page():
+@rx.page(route="/login", title="Login | Pulse", on_load=AuthState.reset_auth_state)
+def log_page():
     return rx.vstack(
         navbar(),
         
@@ -809,7 +825,7 @@ app = rx.App(
 # Landing page (No CAPTCHA needed here)
 app.add_page(index, route="/")
 # Login page (CAPTCHA script moved here)
-app.add_page(login_page, route="/login", on_load=rx.call_script("setTimeout(renderCaptcha, 200);"))
+app.add_page(log_page, route="/login", on_load=rx.call_script("setTimeout(renderCaptcha, 200);"))
 # Protected pages
 app.add_page(home, route="/home", on_load=AuthState.check_auth)
 app.add_page(services, route="/services", on_load=AuthState.check_auth)
