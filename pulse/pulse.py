@@ -86,13 +86,9 @@ class AuthState(rx.State):
         self.turnstile_token = token
         
     @rx.event
-    def login(self, turnstile_token: str = ""):
+    def login(self):
         self.login_message = ""
         self.login_message_type = ""
-        if not turnstile_token:
-            self.login_message = "Please complete the CAPTCHA."
-            self.login_message_type = "error"
-            return
             
         if not self.email or not self.password:
             self.login_message = "Please enter your email and password."
@@ -176,34 +172,35 @@ class AuthState(rx.State):
         self.email = ""
         self.password = ""
         self.turnstile_token = ""
-
-        # 2. Fire client-side script to wipe token and redirect immediately
+    # 2. Fire client-side script to wipe token and redirect immediately
         return [
             rx.call_script("window.turnstileToken = null;"),
             rx.redirect("/")
-        ]
+            ]
 
     #==================================================================================
-    #msgs and info reset
+    #msgs state resetting
+    @rx.event  # <-- CRITICAL: Added missing event decorator
     def reset_auth_state(self):
-            """Wipes all inputs and messages clean when visiting the login page."""
-            self.email = ""
-            self.password = ""
-            self.login_message = ""
-            self.login_message_type = ""
-            self.signup_message = ""
-            self.signup_message_type = ""
-            self.turnstile_token = ""
+        """Wipes all inputs and messages clean when visiting the login page."""
+        self.email = ""
+        self.password = ""
+        self.login_message = ""
+        self.login_message_type = ""
+        self.signup_message = ""
+        self.signup_message_type = ""
+        self.turnstile_token = ""
 
+    @rx.event  # <-- CRITICAL: Added missing event decorator
     def google_login(self):
         try:
             response = supabase.auth.sign_in_with_oauth({
                 "provider": "google"
             })
-
         except Exception as e:
-            self.message = "Google login failed."
-            self.message_type = "error"
+            # Fixed: Using the new separated variables instead of the deleted "message"
+            self.login_message = "Google login failed."
+            self.login_message_type = "error"
 
     
 # NAVBAR
@@ -321,32 +318,24 @@ def auth_middle_section():
     return rx.vstack(
         rx.button("Continue with Google", on_click=AuthState.google_login, width="100%", variant="outline", border_color=YELLOW, color=YELLOW),
         
-        # ==========================================
-        # CLOUDFLARE CAPTCHA LOGIC (Fixed: Only one box now!)
-        # ==========================================
-        rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js", async_=True, defer=True),
+        rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback", async_=True, defer=True),
         rx.script(
             f"""
-            function renderCaptcha() {{
-                if (window.turnstile && document.getElementById('my-captcha-box')) {{
-                    if (window.pulseWidgetId !== undefined) {{
-                        try {{ window.turnstile.remove(window.pulseWidgetId); }} catch(e) {{}}
-                    }}
-                    window.pulseWidgetId = window.turnstile.render('#my-captcha-box', {{
+            function onloadTurnstileCallback() {{
+                if (window.turnstile) {{
+                    window.turnstile.render('#my-captcha-box', {{
                         sitekey: '{TURNSTILE_SITE_KEY}',
                         theme: 'dark',
                         callback: function(token) {{
+                            // Automatically populate token
                             window.turnstileToken = token;
-                            console.log("CAPTCHA Passed! Token saved.");
-                        }}
+                        }},
                     }});
                 }}
             }}
             """
         ),
-        # This is the ONLY target box we need
         rx.html('<div id="my-captcha-box"></div>'),
-        # ==========================================
         
         rx.link("forgot pass?", color=MUTED, margin_top="15px", _hover={"color": GREEN}),
         
@@ -355,7 +344,6 @@ def auth_middle_section():
         width="280px",
         spacing="6",
     )
-
 
 def login_card():
     return rx.vstack(
@@ -380,10 +368,7 @@ def login_card():
                 "color": BG,
                 "border_color": GREEN,
             },
-            on_click=rx.call_script(
-                "window.turnstileToken || ''",
-                callback=AuthState.login,
-            ),
+            on_click=AuthState.login,
         ),
         
         rx.cond(
@@ -407,7 +392,6 @@ def login_card():
 # ===============================================================================
 # LOGIN PAGE ASSEMBLY
 # ===============================================================================
-@rx.page(route="/login", title="Login | Pulse", on_load=AuthState.reset_auth_state)
 def log_page():
     return rx.vstack(
         navbar(),
@@ -537,7 +521,6 @@ def services():
         min_height="100vh", background=BG,
     )
 
-@rx.page(route="/contact", title="Contact | Pulse")
 def contact_page():
     return rx.vstack(
         navbar(),  
@@ -822,11 +805,15 @@ app = rx.App(
     ]
 )
 
-# Landing page (No CAPTCHA needed here)
-app.add_page(index, route="/")
-# Login page (CAPTCHA script moved here)
-app.add_page(log_page, route="/login", on_load=rx.call_script("setTimeout(renderCaptcha, 200);"))
-# Protected pages
-app.add_page(home, route="/home", on_load=AuthState.check_auth)
-app.add_page(services, route="/services", on_load=AuthState.check_auth)
-app.add_page(contact_page, route="/contact", on_load=AuthState.check_auth)
+#Public Pages
+app.add_page(index, route="/", title="Pulse")
+
+#Login Page (Properly triggers the reset function on load)
+app.add_page(log_page, route="/login", title="Login | Pulse", on_load=AuthState.reset_auth_state)
+
+#Protected Pages (Requires Authentication)
+app.add_page(home, route="/home", title="Dashboard | Pulse", on_load=AuthState.check_auth)
+app.add_page(services, route="/services", title="Services | Pulse", on_load=AuthState.check_auth)
+
+#Contact Page (Made public so unauthenticated users can email you!)
+app.add_page(contact_page, route="/contact", title="Contact | Pulse")

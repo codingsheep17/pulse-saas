@@ -14,5 +14,14 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #gonna deal with the login sys now 
 
 #adding the explanations to the main page 
+ 
+#add the images in the landing page, then move on to the login/signup design
 
-#add the images in the landing page, then move on to the login/signup designs
+#solve the captcha not verifying if we do enter details fastly ..
+
+#solve the send msg from gmail (contact page)
+
+#solve the error/success msg, if we do logout and went back on the login/signup page
+it shows us the login successful msg ..
+
+#solve the google login stuff
