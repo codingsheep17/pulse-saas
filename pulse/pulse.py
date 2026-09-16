@@ -519,12 +519,109 @@ def services():
         min_height="100vh", background=BG,
     )
 
-def contact():
+@rx.page(route="/contact", title="Contact | Pulse")
+def contact_page():
     return rx.vstack(
-        navbar(),
-        rx.center(rx.heading("Contact Us", size="8", color=GREEN), flex="1"),
-        footer(),
-        min_height="100vh", background=BG,
+        navbar(),  # The top bread
+        
+        rx.center(
+            # The Main Card Container
+            rx.vstack(
+                # Heading and Text at the top of the card
+                rx.heading("Get in Touch", size="8", color=TEXT, margin_bottom="10px"),
+                rx.text("Have questions about Pulse? Send us a message.", color=MUTED, margin_bottom="30px", text_align="center"),
+                
+                # Form Inputs with CONSTANT Yellow Glow, GREEN on Hover
+                rx.input(
+                    placeholder="Your Name", 
+                    width="100%", 
+                    background="rgba(37, 45, 41, 0.85)", 
+                    color=TEXT, 
+                    padding="15px",
+                    border_color=YELLOW,                     # Constant yellow border
+                    box_shadow=f"0 0 8px {YELLOW}",         # Constant yellow glow
+                    transition="all 0.3s ease",
+                    _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
+                    _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
+                ),
+                rx.input(
+                    placeholder="Your Email", 
+                    type="email", 
+                    width="100%", 
+                    background="rgba(37, 45, 41, 0.85)", 
+                    color=TEXT, 
+                    padding="15px",
+                    border_color=YELLOW,                     # Constant yellow border
+                    box_shadow=f"0 0 8px {YELLOW}",         # Constant yellow glow
+                    transition="all 0.3s ease",
+                    _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
+                    _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
+                ),
+                rx.text_area(
+                    placeholder="How can we help?", 
+                    width="100%", 
+                    background="rgba(37, 45, 41, 0.85)", 
+                    color=TEXT, 
+                    padding="15px", 
+                    min_height="120px",
+                    border_color=YELLOW,                     # Constant yellow border
+                    box_shadow=f"0 0 8px {YELLOW}",         # Constant yellow glow
+                    transition="all 0.3s ease",
+                    _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
+                    _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
+                ),
+                
+                # Submit Button turns Green on Hover
+                rx.button(
+                    "Send Message",
+                    width="100%",
+                    background=BG,                 
+                    color=TEXT,
+                    border=f"1px solid {BORDER}",  
+                    margin_top="10px",
+                    padding="20px",
+                    cursor="pointer",
+                    transition="all 0.3s ease",
+                    _hover={
+                        "background": GREEN,       
+                        "color": BG,
+                        "border_color": GREEN,
+                        "box_shadow": f"0 0 15px {GREEN}"
+                    },
+                ),
+                
+                width="100%",
+                height="100%",
+                padding="40px",
+                justify_content="center", 
+                align_items="center",
+            ),
+            
+            # --- CONTAINER SIZING & CANVA BACKGROUND ---
+            width="100%",
+            max_width="480px",       
+            height="75vh",           
+            max_height="700px",      
+            
+            background_image="url('/contact_card.png')",
+            background_size="cover",
+            background_position="center",
+            
+            border="1px solid",
+            border_color=BORDER,
+            border_radius="20px",
+            box_shadow="0 20px 60px rgba(0, 0, 0, 0.6)",
+            overflow="hidden",       
+            margin_y="20px",
+            
+            flex="1", # This tells the center container to fill the space between navbar and footer!
+            width="100%",
+        ),
+        
+        footer(),  # The bottom bread
+        
+        min_height="100vh",
+        background=BG,
     )
 
 # LANDING PAGE COMPONENTS
@@ -714,4 +811,4 @@ app.add_page(login_page, route="/login", on_load=rx.call_script("setTimeout(rend
 # Protected pages
 app.add_page(home, route="/home", on_load=AuthState.check_auth)
 app.add_page(services, route="/services", on_load=AuthState.check_auth)
-app.add_page(contact, route="/contact", on_load=AuthState.check_auth)
+app.add_page(contact_page, route="/contact", on_load=AuthState.check_auth)
