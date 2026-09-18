@@ -258,7 +258,7 @@ def navbar():
 # ===============================================================================
 def signup_card():
     return rx.vstack(
-        rx.heading("signup", size="8", color=TEXT, margin_bottom="20px"),
+        rx.heading("SignUp", size="8", color=TEXT, margin_bottom="20px", width="100%", text_align='center'),
         
         rx.input(placeholder="name (optional)", width="100%", background="#252D29", border_color=BORDER, color=TEXT),
         
@@ -334,7 +334,7 @@ def auth_middle_section():
 
 def login_card():
     return rx.vstack(
-        rx.heading("login", size="8", color=TEXT, margin_bottom="20px"),
+        rx.heading("Login", size="8", color=TEXT, margin_bottom="20px", width="100%", text_align="center"),
         
         # REMOVED: value=AuthState.email and value=AuthState.password
         rx.input(placeholder="gmail", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
