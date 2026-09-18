@@ -163,7 +163,7 @@ class AuthState(rx.State):
 
     @rx.event
     def logout(self):
-        # 1. Clear backend state instantly
+        # Clear backend state instantly
         self.is_authenticated = False
         self.login_message = ""
         self.login_message_type = ""
@@ -172,7 +172,7 @@ class AuthState(rx.State):
         self.email = ""
         self.password = ""
         self.turnstile_token = ""
-    # 2. Fire client-side script to wipe token and redirect immediately
+    #Fire client-side script to wipe token and redirect immediately
         return [
             rx.call_script("window.turnstileToken = null;"),
             rx.redirect("/")
@@ -190,18 +190,6 @@ class AuthState(rx.State):
         self.signup_message = ""
         self.signup_message_type = ""
         self.turnstile_token = ""
-
-    @rx.event  # <-- CRITICAL: Added missing event decorator
-    def google_login(self):
-        try:
-            response = supabase.auth.sign_in_with_oauth({
-                "provider": "google"
-            })
-        except Exception as e:
-            # Fixed: Using the new separated variables instead of the deleted "message"
-            self.login_message = "Google login failed."
-            self.login_message_type = "error"
-
     
 # NAVBAR
 # ===============================================================================
@@ -316,7 +304,6 @@ def signup_card():
 
 def auth_middle_section():
     return rx.vstack(
-        rx.button("Continue with Google", on_click=AuthState.google_login, width="100%", variant="outline", border_color=YELLOW, color=YELLOW),
         
         rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback", async_=True, defer=True),
         rx.script(
