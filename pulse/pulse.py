@@ -260,11 +260,9 @@ def signup_card():
     return rx.vstack(
         rx.heading("SignUp", size="8", color=TEXT, margin_bottom="20px", width="100%", text_align='center'),
         
-        rx.input(placeholder="name (optional)", width="100%", background="#252D29", border_color=BORDER, color=TEXT),
-        
-        # REMOVED: value=AuthState.email and value=AuthState.password
-        rx.input(placeholder="email (mandatory)", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
-        rx.input(placeholder="password (mandatory)", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        rx.input(placeholder="name (optional)", width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_name", name="signup_name"),
+        rx.input(placeholder="email (mandatory)", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_email", name="signup_email"),
+        rx.input(placeholder="password (mandatory)", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_password", name="signup_password"),
         
         rx.button(
             "signup",
@@ -336,9 +334,8 @@ def login_card():
     return rx.vstack(
         rx.heading("Login", size="8", color=TEXT, margin_bottom="20px", width="100%", text_align="center"),
         
-        # REMOVED: value=AuthState.email and value=AuthState.password
-        rx.input(placeholder="gmail", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
-        rx.input(placeholder="password", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT),
+        rx.input(placeholder="gmail", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="login_email", name="login_email"),
+        rx.input(placeholder="password", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="login_password", name="login_password"),
         
         rx.button(
             "Login",
@@ -357,7 +354,7 @@ def login_card():
             },
             on_click=AuthState.login,
         ),
-        
+
         rx.cond(
             AuthState.login_message != "",
             rx.text(
@@ -490,6 +487,32 @@ def footer():
         background=NAV_BG,
     )
 
+#=================================================================================
+#service card for service page
+def service_card(title: str, description: str, icon_tag: str):
+    """A reusable blueprint for the 6 service offerings."""
+    return rx.vstack(
+        # We use Reflex's built-in Lucide icons (matches the aesthetic perfectly)
+        rx.icon(tag=icon_tag, size=40, color=YELLOW, margin_bottom="10px"),
+        
+        rx.heading(title, size="5", color=TEXT, text_align="center"),
+        rx.text(description, color=MUTED, size="3", text_align="center", line_height="1.5"),
+        
+        padding="30px",
+        background=CARD_BG,
+        border=f"1px solid {BORDER}",
+        border_radius="20px",
+        align_items="center",
+        justify_content="center",
+        width="100%",
+        min_height="0px",
+        transition="all 0.3s ease",
+        _hover={
+            "border_color": GREEN,
+            "box_shadow": f"0 10px 30px rgba(183, 227, 107, 0.15)",
+            "transform": "translateY(-5px)" # Tiny hover lift
+        }
+    )
 # PROTECTED PAGES (Restored)
 # ================================================================================
 def home():
@@ -503,9 +526,73 @@ def home():
 def services():
     return rx.vstack(
         navbar(),
-        rx.center(rx.heading("Our Services", size="8", color=GREEN), flex="1"),
+        
+        rx.center(
+            rx.vstack(
+                # --- HERO SECTION ---
+                rx.heading("I BUILD SOLUTIONS THAT GROW YOUR BUSINESS", size="8", color=TEXT, text_align="center", margin_bottom="10px"),
+                rx.text("SMART. SCALABLE. IMPACTFUL.", color=GREEN, size="5", weight="bold", margin_bottom="50px"),
+                
+                # --- 3-COLUMN GRID ---
+                rx.grid(
+                    service_card(
+                        "Business Dashboards", 
+                        "See everything clearly. Track what matters. Make better decisions.", 
+                        "bar-chart-3"
+                    ),
+                    service_card(
+                        "Smart Automation", 
+                        "Automate repetitive work. Save time. Reduce errors. Increase productivity.", 
+                        "cpu"
+                    ),
+                    service_card(
+                        "Customer Systems", 
+                        "Understand your customers better and deliver exceptional experiences.", 
+                        "users"
+                    ),
+                    service_card(
+                        "Intelligent AI", 
+                        "Smart systems that learn, predict and help you stay one step ahead.", 
+                        "brain-circuit"
+                    ),
+                    service_card(
+                        "Scalable Products", 
+                        "Modern, secure and scalable products built to grow with your business.", 
+                        "rocket"
+                    ),
+                    service_card(
+                        "AI Agent Solutions", 
+                        "Smart AI agents that talk, assist and get things done for your business.", 
+                        "bot"
+                    ),
+                    columns="3",     # Creates 3 equal columns
+                    spacing="6",     # Gap between cards
+                    width="100%",
+                    max_width="1100px"
+                ),
+                
+                # --- BOTTOM CTA ---
+                rx.box(
+                    rx.heading("I DON'T JUST BUILD APPS. I BUILD GROWTH ENGINES.", size="6", color=YELLOW, text_align="center"),
+                    margin_top="60px",
+                    padding="30px",
+                    border=f"1px solid {YELLOW}",
+                    border_radius="20px",
+                    background="rgba(242, 209, 107, 0.05)",
+                    box_shadow=f"0 0 20px rgba(242, 209, 107, 0.1)"
+                ),
+                
+                align_items="center",
+                width="100%",
+                padding_y="60px", # Gives breathing room from navbar and footer
+            ),
+            flex="1",
+            width="100%",
+        ),
+        
         footer(),
-        min_height="100vh", background=BG,
+        min_height="100vh", 
+        background=BG,
     )
 
 def contact_page():
