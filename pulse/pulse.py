@@ -3,7 +3,9 @@ from supabase import create_client
 from dotenv import load_dotenv
 import os
 import time
-
+import smtplib
+from email.message import EmailMessage
+import os
 
 # Pulse Global Colors
 BG = "#0D1110"
@@ -608,7 +610,49 @@ def services():
         background=BG,
     )
 
+class ContactState(rx.State):
+    contact_name: str = ""
+    contact_message: str = ""
+    feedback_message: str = ""
+    feedback_type: str = "" 
 
+    @rx.event
+    def handle_submit(self, user_email: str):
+        # 1. Show processing state instantly
+        self.feedback_message = "Sending..."
+        self.feedback_type = "success"
+        yield  # Tells Reflex to update the UI immediately before running the slow email network code
+
+        try:
+            # 2. Grab your secure credentials
+            sender_email = os.getenv("GMAIL_ADDRESS")
+            app_password = os.getenv("GMAIL_APP_PASSWORD")
+
+            if not sender_email or not app_password:
+                self.feedback_message = "Server email configuration is missing."
+                self.feedback_type = "error"
+                return
+
+            # 3. Construct the email package
+            msg = EmailMessage()
+            msg.set_content(f"Name: {self.contact_name}\nRegistered Email: {user_email}\n\nMessage:\n{self.contact_message}")
+            msg['Subject'] = f"New Pulse Inquiry from {self.contact_name}"
+            msg['From'] = sender_email
+            msg['To'] = sender_email  # You are sending it from your account, directly to your own inbox
+
+            # 4. Connect to Google and send it!
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                smtp.login(sender_email, app_password)
+                smtp.send_message(msg)
+
+            # 5. Success cleanup
+            self.feedback_message = "Message sent successfully!"
+            self.feedback_type = "success"
+            self.contact_message = ""  # Clear the text area
+
+        except Exception as e:
+            self.feedback_message = f"Failed to send: {str(e)}"
+            self.feedback_type = "error"
 
 def contact_page():
     return rx.vstack(
@@ -663,6 +707,8 @@ def contact_page():
                 
                 rx.button(
                     "Send Message",
+                    # Pass the AuthState email into our new function
+                    on_click=lambda: ContactState.handle_submit(AuthState.email),
                     width="100%",
                     background=BG,                 
                     color=TEXT,
