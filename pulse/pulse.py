@@ -52,11 +52,52 @@ class ContactState(rx.State):
     feedback_message: str = ""
     feedback_type: str = "" 
 
+    # 1. EXPLICIT SETTERS: These force the UI to sync with the backend
+    def set_contact_name(self, name_input: str):
+        self.contact_name = name_input
+
+    def set_contact_message(self, message_input: str):
+        self.contact_message = message_input
+
     @rx.event
-    def handle_submit(self):
-        """Temporary placeholder until we add the email logic."""
-        self.feedback_message = "Processing your message..."
+    def handle_submit(self, user_email: str):
+        self.feedback_message = "Sending..."
         self.feedback_type = "success"
+        yield  # Updates UI immediately
+
+        try:
+            # Grab your secure credentials
+            sender_email = os.getenv("GMAIL_ADDRESS")
+            app_password = os.getenv("GMAIL_APP_PASSWORD")
+
+            if not sender_email or not app_password:
+                self.feedback_message = "Server email configuration is missing."
+                self.feedback_type = "error"
+                return
+
+            # Construct the email package using the synced state variables
+            msg = EmailMessage()
+            msg.set_content(f"Name: {self.contact_name}\nRegistered Email: {user_email}\n\nMessage:\n{self.contact_message}")
+            msg['Subject'] = f"New Pulse Inquiry from {self.contact_name}"
+            msg['From'] = sender_email
+            msg['To'] = sender_email  
+
+            # Connect to Google and send it
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                smtp.login(sender_email, app_password)
+                smtp.send_message(msg)
+
+            # Success cleanup
+            self.feedback_message = "Message sent successfully!"
+            self.feedback_type = "success"
+            
+            # Wipe the text area clean after a successful send
+            self.contact_message = ""  
+            self.contact_name = ""
+
+        except Exception as e:
+            self.feedback_message = f"Failed to send: {str(e)}"
+            self.feedback_type = "error"
 
 #Session Dealing logic comes here
 class AuthState(rx.State):
@@ -610,50 +651,6 @@ def services():
         background=BG,
     )
 
-class ContactState(rx.State):
-    contact_name: str = ""
-    contact_message: str = ""
-    feedback_message: str = ""
-    feedback_type: str = "" 
-
-    @rx.event
-    def handle_submit(self, user_email: str):
-        # 1. Show processing state instantly
-        self.feedback_message = "Sending..."
-        self.feedback_type = "success"
-        yield  # Tells Reflex to update the UI immediately before running the slow email network code
-
-        try:
-            # 2. Grab your secure credentials
-            sender_email = os.getenv("GMAIL_ADDRESS")
-            app_password = os.getenv("GMAIL_APP_PASSWORD")
-
-            if not sender_email or not app_password:
-                self.feedback_message = "Server email configuration is missing."
-                self.feedback_type = "error"
-                return
-
-            # 3. Construct the email package
-            msg = EmailMessage()
-            msg.set_content(f"Name: {self.contact_name}\nRegistered Email: {user_email}\n\nMessage:\n{self.contact_message}")
-            msg['Subject'] = f"New Pulse Inquiry from {self.contact_name}"
-            msg['From'] = sender_email
-            msg['To'] = sender_email  # You are sending it from your account, directly to your own inbox
-
-            # 4. Connect to Google and send it!
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-                smtp.login(sender_email, app_password)
-                smtp.send_message(msg)
-
-            # 5. Success cleanup
-            self.feedback_message = "Message sent successfully!"
-            self.feedback_type = "success"
-            self.contact_message = ""  # Clear the text area
-
-        except Exception as e:
-            self.feedback_message = f"Failed to send: {str(e)}"
-            self.feedback_type = "error"
-
 def contact_page():
     return rx.vstack(
         navbar(),  
@@ -669,6 +666,7 @@ def contact_page():
                 # Form Inputs
                 rx.input(
                     placeholder="Your Name", 
+                    on_change=ContactState.set_contact_name,
                     width="100%", 
                     height="45px",
                     background="rgba(37, 45, 41, 0.85)", 
@@ -692,7 +690,9 @@ def contact_page():
                     border_color=BORDER,
                 ),
                 rx.text_area(
-                    placeholder="How can we help?", 
+                    placeholder="How can we help?",
+                    value=ContactState.contact_message,
+                    on_change=ContactState.set_contact_message, 
                     width="100%", 
                     background="rgba(37, 45, 41, 0.85)", 
                     color=TEXT, 

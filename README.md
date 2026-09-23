@@ -21,7 +21,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 
 #solve the send msg from gmail (contact page)
 
-#solve the error/success msg, if we do logout and went back on the login/signup page
-it shows us the login successful msg ..
 
-#solve the google login stuff
+#remove the auto fill shi from google
