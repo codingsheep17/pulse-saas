@@ -43,6 +43,19 @@ supabase = create_client(
     PUBLIC_SUPABASE_PUBLISHABLE_KEY
 )
 
+#contact class here
+class ContactState(rx.State):
+    contact_name: str = ""
+    contact_message: str = ""
+    feedback_message: str = ""
+    feedback_type: str = "" 
+
+    @rx.event
+    def handle_submit(self):
+        """Temporary placeholder until we add the email logic."""
+        self.feedback_message = "Processing your message..."
+        self.feedback_type = "success"
+
 #Session Dealing logic comes here
 class AuthState(rx.State):
     email: str = ""
@@ -595,6 +608,8 @@ def services():
         background=BG,
     )
 
+
+
 def contact_page():
     return rx.vstack(
         navbar(),  
@@ -621,19 +636,16 @@ def contact_page():
                     _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
                     _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
                 ),
+
                 rx.input(
-                    placeholder="Your Email", 
-                    type="email", 
+                    value=AuthState.email,
+                    disabled=True, 
                     width="100%", 
                     height="45px",
-                    background="rgba(37, 45, 41, 0.85)", 
-                    color=TEXT, 
+                    background="rgba(37, 45, 41, 0.5)", # Slightly darker to indicate it's locked
+                    color=MUTED, 
                     padding="15px",
-                    border_color=YELLOW,
-                    box_shadow=f"0 0 8px {YELLOW}",
-                    transition="all 0.3s ease",
-                    _hover={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"},
-                    _focus={"border_color": GREEN, "box_shadow": f"0 0 12px {GREEN}"}
+                    border_color=BORDER,
                 ),
                 rx.text_area(
                     placeholder="How can we help?", 
@@ -889,5 +901,5 @@ app.add_page(log_page, route="/login", title="Login | Pulse", on_load=AuthState.
 app.add_page(home, route="/home", title="Dashboard | Pulse", on_load=AuthState.check_auth)
 app.add_page(services, route="/services", title="Services | Pulse", on_load=AuthState.check_auth)
 
-#Contact Page (Made public so unauthenticated users can email you!)
-app.add_page(contact_page, route="/contact", title="Contact | Pulse")
+#Contact Page (Made public so unauthenticated users can email you)
+app.add_page(contact_page, route="/contact", title="Contact | Pulse", on_load=AuthState.check_auth)
