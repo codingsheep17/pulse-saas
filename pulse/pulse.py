@@ -317,8 +317,8 @@ def signup_card():
         rx.heading("SignUp", size="8", color=TEXT, margin_bottom="20px", width="100%", text_align='center'),
         
         rx.input(placeholder="name (optional)", width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_name", name="signup_name"),
-        rx.input(placeholder="email (mandatory)", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_email", name="signup_email"),
-        rx.input(placeholder="password (mandatory)", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_password", name="signup_password"),
+        rx.input(placeholder="email (mandatory)", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_email", name="signup_email", auto_complete=False),
+        rx.input(placeholder="password (mandatory)", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_password", name="signup_password", auto_complete=False),
         
         rx.button(
             "signup",
@@ -390,8 +390,8 @@ def login_card():
     return rx.vstack(
         rx.heading("Login", size="8", color=TEXT, margin_bottom="20px", width="100%", text_align="center"),
         
-        rx.input(placeholder="gmail", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="login_email", name="login_email"),
-        rx.input(placeholder="password", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="login_password", name="login_password"),
+        rx.input(placeholder="gmail", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="login_email", name="login_email", auto_complete=False),
+        rx.input(placeholder="password", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="login_password", name="login_password", auto_complete=False),
         
         rx.button(
             "Login",
