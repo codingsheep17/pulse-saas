@@ -317,8 +317,31 @@ def signup_card():
         rx.heading("SignUp", size="8", color=TEXT, margin_bottom="20px", width="100%", text_align='center'),
         
         rx.input(placeholder="name (optional)", width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_name", name="signup_name"),
-        rx.input(placeholder="email (mandatory)", type="email", on_change=AuthState.set_email, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_email", name="signup_email", auto_complete=False),
-        rx.input(placeholder="password (mandatory)", type="password", on_change=AuthState.set_password, width="100%", background="#252D29", border_color=BORDER, color=TEXT, id="signup_password", name="signup_password", auto_complete=False),
+        rx.input(
+            placeholder="email (mandatory)", 
+            type="email", 
+            on_change=AuthState.set_email, 
+            width="100%", 
+            background="#252D29", 
+            border_color=BORDER, 
+            color=TEXT, 
+            id="signup_email", 
+            name="signup_email", 
+            custom_attrs={"autocomplete": "off"}  # Bypasses Reflex type-checker
+        ),
+        
+        rx.input(
+            placeholder="password (mandatory)", 
+            type="password", 
+            on_change=AuthState.set_password, 
+            width="100%", 
+            background="#252D29", 
+            border_color=BORDER, 
+            color=TEXT, 
+            id="signup_password", 
+            name="signup_password", 
+            custom_attrs={"autocomplete": "new-password"} # Strictly tells Chrome this is a NEW account
+        ),
         
         rx.button(
             "signup",
@@ -723,6 +746,18 @@ def contact_page():
                         "border_color": GREEN,
                         "box_shadow": f"0 0 15px {GREEN}"
                     },
+                ),
+                
+                # Dynamic feedback alert
+                rx.cond(
+                    ContactState.feedback_message != "",
+                    rx.text(
+                        ContactState.feedback_message,
+                        color=rx.cond(ContactState.feedback_type == "success", GREEN, "#ef4444"), # Green for success, Red for error
+                        margin_top="15px",
+                        font_weight="bold",
+                        text_align="center"
+                    )
                 ),
                 
                 # --- CARD SIZING & BACKGROUND (Moved here!) ---
