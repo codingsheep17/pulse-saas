@@ -1,11 +1,11 @@
 import reflex as rx
 from supabase import create_client
 from dotenv import load_dotenv
-import os
 import time
 import smtplib
 from email.message import EmailMessage
 import os
+import asyncio
 
 # Pulse Global Colors
 BG = "#0D1110"
@@ -60,7 +60,7 @@ class ContactState(rx.State):
         self.contact_message = message_input
 
     @rx.event
-    def handle_submit(self, user_email: str):
+    async def handle_submit(self, user_email: str):  
         self.feedback_message = "Sending..."
         self.feedback_type = "success"
         yield  # Updates UI immediately
@@ -87,13 +87,18 @@ class ContactState(rx.State):
                 smtp.login(sender_email, app_password)
                 smtp.send_message(msg)
 
-            # Success cleanup
-            self.feedback_message = "Message sent successfully!"
-            self.feedback_type = "success"
-            
-            # Wipe the text area clean after a successful send
+            # Wipe both fields clean
             self.contact_message = ""  
             self.contact_name = ""
+            
+            # 1. Tell UI to show the success message and cleared inputs IMMEDIATELY
+            yield 
+            
+            # 2. Pause this function for 3 seconds
+            await asyncio.sleep(3)
+            
+            # 3. Erase the success message
+            self.feedback_message = ""
 
         except Exception as e:
             self.feedback_message = f"Failed to send: {str(e)}"
@@ -686,9 +691,9 @@ def contact_page():
                 rx.heading("Get in Touch", size="8", color=TEXT, margin_bottom="10px"),
                 rx.text("Have questions about Pulse? Send us a message.", color=MUTED, margin_bottom="30px", text_align="center"),
                 
-                # Form Inputs
                 rx.input(
                     placeholder="Your Name", 
+                    value=ContactState.contact_name, 
                     on_change=ContactState.set_contact_name,
                     width="100%", 
                     height="45px",
