@@ -21,5 +21,8 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 
 #solve the send msg from gmail (contact page)
 
-
 #remove the auto fill shi from google
+
+#also add the msg success or fail for the contact
+
+#all done now working on the ram model
