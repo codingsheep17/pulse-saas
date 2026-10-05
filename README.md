@@ -26,3 +26,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #also add the msg success or fail for the contact
 
 #all done now working on the ram model
+
+#done the ram model
