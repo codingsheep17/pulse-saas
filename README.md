@@ -28,3 +28,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #all done now working on the ram model
 
 #done the ram model
+
+#done the cpu model
