@@ -904,7 +904,7 @@ def landing_features():
         ),
         # 5. Right Card: Early Warning 
         feature_row(
-            "AI Early Warning",
+            "Early Warning",
             "Pulse doesn't just show graphs. It learns your system's baseline and alerts you to anomalies instantly.",
             "/anomaly.png",
             card_on_left=False
