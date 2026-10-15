@@ -34,3 +34,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 #done the gpu model
 
 #integration of the ram model started
+
+#time for integration
