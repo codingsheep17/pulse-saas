@@ -8,14 +8,16 @@ import os
 import asyncio
 
 # Pulse Global Colors
-BG = "#0D1110"
-NAV_BG = "#151B18"
-CARD_BG = "#1C2420"
 GREEN = "#B7E36B"
 YELLOW = "#F2D16B"
 TEXT = "#F3F5F2"
 MUTED = "#A8B0AC"
-BORDER = "#303A35"
+
+# MESH GRADIENT COLOR PALETTE
+BG = "radial-gradient(circle at 15% 15%, rgba(20, 35, 30, 0.8) 0%, transparent 45%), radial-gradient(circle at 85% 85%, rgba(15, 28, 25, 0.7) 0%, transparent 50%), #0A0E0C"
+NAV_BG = "rgba(15, 22, 19, 0.75)"  # Semi-transparent for glassmorphism blur
+CARD_BG = "rgba(22, 32, 27, 0.65)" # Translucent cards showing the gradient behind
+BORDER = "rgba(183, 227, 107, 0.15)" # Subtle neon border highlight
 
 # Global App Style
 PULSE_STYLE = {
@@ -283,7 +285,7 @@ def navbar():
                 # WHAT PUBLIC USERS SEE: Just Login/Signup Button
                 rx.button(
                     "Login/Signup",
-                    background=TEXT,
+                    background=GREEN,
                     color=BG,
                     border_radius="20px",
                     padding_x="24px",
