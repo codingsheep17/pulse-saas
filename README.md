@@ -33,6 +33,10 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 
 #done the gpu model
 
+<<<<<<< HEAD
 #integration of the ram model started
 
 #time for integration
+=======
+#time for deployment
+>>>>>>> d6af0ce (Time for deployment)
