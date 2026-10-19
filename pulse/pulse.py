@@ -6,6 +6,10 @@ import smtplib
 from email.message import EmailMessage
 import os
 import asyncio
+import joblib
+import pandas as pd
+import psutil
+
 
 # Pulse Global Colors
 GREEN = "#B7E36B"
@@ -46,6 +50,73 @@ supabase = create_client(
     PUBLIC_SUPABASE_URL,
     PUBLIC_SUPABASE_PUBLISHABLE_KEY
 )
+
+#the telemetry class
+class TelemetryState(rx.State):
+    #models
+    xgb_ram_model = joblib.load("D:/Desktop/Pulse/models/xgboost_ram.pkl")
+    xgb_io_model = joblib.load("D:/Desktop/Pulse/models/xgb_net.pkl")
+    xgb_cpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_cpu.pkl")
+    xgb_gpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_gpu.pkl")
+    
+    # Live RAM UI Metrics
+    ram_util: float = 0.0
+    ram_delta: float = 0.0
+    ram_drift: float = 0.0
+    ram_status: str = "Idle"
+    ram_is_anomaly: bool = False
+    
+    # NEW: The On/Off Switch
+    ram_monitoring_active: bool = False
+    
+    ram_chart_data: list[dict] = []
+    
+    @rx.event
+    def toggle_ram_monitoring(self, active: bool):
+        """Fired when the user clicks the UI switch."""
+        self.ram_monitoring_active = active
+        if not active:
+            self.ram_status = "Idle"
+            self.ram_is_anomaly = False
+
+    @rx.event(background=True)
+    async def stream_ram_telemetry(self):
+        """Async background daemon."""
+        buffer = deque(maxlen=12)
+        
+        while True:
+            async with self:
+                # ONLY run the heavy ML and hardware polling if the switch is ON
+                if self.ram_monitoring_active:
+                    curr_ram = psutil.virtual_memory().percent
+                    buffer.append(curr_ram)
+                    
+                    self.ram_util = curr_ram
+                    
+                    # Wait until rolling buffer has 12 seconds of data
+                    if len(buffer) == 12:
+                        delta = curr_ram - buffer[-2]
+                        rolling_mean = np.mean(buffer)
+                        drift = curr_ram - rolling_mean
+                        
+                        self.ram_delta = round(delta, 2)
+                        self.ram_drift = round(drift, 2)
+                        
+                        if xgb_ram_model is not None:
+                            X_live = pd.DataFrame([{'ram_delta': delta, 'ram_diff_rolling': drift}])
+                            pred = xgb_ram_model.predict(X_live)[0]
+                            self.ram_is_anomaly = bool(pred == 1)
+                            self.ram_status = "🚨 ANOMALY" if self.ram_is_anomaly else "✅ Normal"
+                        else:
+                            self.ram_status = "Model Missing"
+                            
+                        new_point = {"time": time.strftime("%H:%M:%S"), "RAM": curr_ram}
+                        self.ram_chart_data = self.ram_chart_data[-19:] + [new_point]
+                else:
+                    # If turned off, clear the buffer so we don't use stale data when turned back on
+                    buffer.clear()
+
+            await asyncio.sleep(1)
 
 #contact class here
 class ContactState(rx.State):
@@ -152,6 +223,12 @@ class AuthState(rx.State):
     def login(self):
         self.login_message = ""
         self.login_message_type = ""
+        
+        # 1. CAPTCHA GUARD CHECK
+        if not self.turnstile_token:
+            self.login_message = "Please complete the 'Verify you are human' check."
+            self.login_message_type = "error"
+            return
             
         if not self.email or not self.password:
             self.login_message = "Please enter your email and password."
@@ -187,6 +264,12 @@ class AuthState(rx.State):
             self.signup_message_type = "error"
             return
 
+        # 1. CAPTCHA GUARD CHECK
+        if not self.turnstile_token:
+            self.signup_message = "Please complete the 'Verify you are human' check."
+            self.signup_message_type = "error"
+            return
+        
         if not self.email or not self.password:
             self.signup_message = "Please enter your email and password."
             self.signup_message_type = "error"
@@ -388,6 +471,12 @@ def signup_card():
 
 def auth_middle_section():
     return rx.vstack(
+        # Hidden via CSS so React keeps on_change listeners active
+        rx.input(
+            id="turnstile_input",
+            on_change=AuthState.set_turnstile_token,
+            style={"display": "none"},
+        ),
         
         rx.script(src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback", async_=True, defer=True),
         rx.script(
@@ -398,8 +487,14 @@ def auth_middle_section():
                         sitekey: '{TURNSTILE_SITE_KEY}',
                         theme: 'dark',
                         callback: function(token) {{
-                            // Automatically populate token
                             window.turnstileToken = token;
+                            var input = document.getElementById("turnstile_input");
+                            if (input) {{
+                                var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                nativeSetter.call(input, token);
+                                input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                                input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            }}
                         }},
                     }});
                 }}
