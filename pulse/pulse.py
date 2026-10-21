@@ -55,12 +55,19 @@ supabase = create_client(
     PUBLIC_SUPABASE_PUBLISHABLE_KEY
 )
 
-#the telemetry class
-class TelemetryState(rx.State):
-    #models
+#models
+try:
+    xgb_ram_model = joblib.load("D:/Desktop/Pulse/models/xgboost_ram.pkl")
     xgb_io_model = joblib.load("D:/Desktop/Pulse/models/xgb_net.pkl")
     xgb_cpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_cpu.pkl")
     xgb_gpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_gpu.pkl")
+except Exception as e:
+    xgb_ram_model = None
+    print(f"Model load error: {e}")
+
+#the telemetry class
+class TelemetryState(rx.State):
+    
     
     # Live RAM UI Metrics
     ram_util: float = 0.0
@@ -68,10 +75,7 @@ class TelemetryState(rx.State):
     ram_drift: float = 0.0
     ram_status: str = "Idle"
     ram_is_anomaly: bool = False
-    
-    # NEW: The On/Off Switch
     ram_monitoring_active: bool = False
-    
     ram_chart_data: list[dict] = []
     
     @rx.event
@@ -88,7 +92,6 @@ class TelemetryState(rx.State):
         
         buffer = deque(maxlen=12)
         
-        xgb_ram_model = joblib.load("D:/Desktop/Pulse/models/xgboost_ram.pkl")
         while True:
             async with self:
                 # ONLY run the heavy ML and hardware polling if the switch is ON
