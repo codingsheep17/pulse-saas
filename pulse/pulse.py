@@ -8,7 +8,11 @@ import os
 import asyncio
 import joblib
 import pandas as pd
+import numpy as np
 import psutil
+from collections import deque
+
+#working with ram continue it
 
 
 # Pulse Global Colors
@@ -54,7 +58,6 @@ supabase = create_client(
 #the telemetry class
 class TelemetryState(rx.State):
     #models
-    xgb_ram_model = joblib.load("D:/Desktop/Pulse/models/xgboost_ram.pkl")
     xgb_io_model = joblib.load("D:/Desktop/Pulse/models/xgb_net.pkl")
     xgb_cpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_cpu.pkl")
     xgb_gpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_gpu.pkl")
@@ -82,8 +85,10 @@ class TelemetryState(rx.State):
     @rx.event(background=True)
     async def stream_ram_telemetry(self):
         """Async background daemon."""
+        
         buffer = deque(maxlen=12)
         
+        xgb_ram_model = joblib.load("D:/Desktop/Pulse/models/xgboost_ram.pkl")
         while True:
             async with self:
                 # ONLY run the heavy ML and hardware polling if the switch is ON
