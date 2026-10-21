@@ -699,14 +699,116 @@ def service_card(title: str, description: str, icon_tag: str):
             "transform": "translateY(-5px)" # Tiny hover lift
         }
     )
+    
+def ram_telemetry_card():
+    """The self-contained UI card for the RAM ML Engine."""
+    return rx.vstack(
+        # 1. Header: Title, Status Text, and Toggle Switch
+        rx.hstack(
+            rx.heading("RAM Engine", size="5", color=TEXT),
+            rx.spacer(),
+            # Shows "Detecting..." or "Idle" based on state
+            rx.text(
+                rx.cond(TelemetryState.ram_monitoring_active, "Detecting...", "Idle"), 
+                color=MUTED, 
+                size="2"
+            ),
+            # The On/Off Switch
+            rx.switch(
+                is_checked=TelemetryState.ram_monitoring_active,
+                on_change=TelemetryState.toggle_ram_monitoring,
+                color_scheme="green",
+            ),
+            width="100%",
+            align_items="center",
+        ),
+
+        # 2. Live Chart (Fixed height so it doesn't break the grid)
+        rx.recharts.line_chart(
+            rx.recharts.line(
+                data_key="RAM", 
+                stroke=GREEN, 
+                stroke_width=2, 
+                dot=False
+            ),
+            rx.recharts.y_axis(domain=[0, 100], stroke=MUTED),
+            rx.recharts.x_axis(data_key="time", hide=True), # Hidden to save space
+            data=TelemetryState.ram_chart_data,
+            width="100%",
+            height=200,
+        ),
+
+        # 3. Footer: Anomaly Status Label
+        rx.center(
+            rx.heading(
+                TelemetryState.ram_status,
+                size="4",
+                # Dynamic coloring: Red if anomaly, Green if active, Gray if idle
+                color=rx.cond(
+                    TelemetryState.ram_is_anomaly, 
+                    "#ef4444", 
+                    rx.cond(TelemetryState.ram_monitoring_active, GREEN, MUTED)
+                )
+            ),
+            width="100%",
+            padding_top="10px",
+            border_top=f"1px solid {BORDER}",
+        ),
+
+        # Card Styling
+        width="100%",
+        height="100%",
+        padding="20px",
+        background=CARD_BG,
+        border=f"1px solid {BORDER}",
+        border_radius="16px",
+        box_shadow="0 10px 30px rgba(0,0,0,0.2)",
+    )
+
 # PROTECTED PAGES (Restored)
 # ================================================================================
 def home():
     return rx.vstack(
         navbar(),
-        rx.center(rx.heading("Home Dashboard", size="8", color=GREEN), flex="1"),
+        
+        rx.center(
+            # The 2x2 Grid Container
+            rx.grid(
+                # Top Left: RAM Model
+                ram_telemetry_card(),
+                
+                # Top Right: Placeholder for IO
+                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
+                
+                # Bottom Left: Placeholder for CPU
+                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
+                
+                # Bottom Right: Placeholder for GPU
+                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
+                
+                columns="2",
+                spacing="6",
+                width="100%",
+                max_width="1200px",
+                # Forces the grid to fit nicely between navbar and footer without scrolling
+                height="calc(100vh - 160px)", 
+                padding="20px",
+            ),
+            flex="1",
+            width="100%",
+        ),
+
+        # Live Audio Alarm Trigger (Plays when RAM Anomaly detected)
+        rx.cond(
+            TelemetryState.ram_is_anomaly,
+            rx.html(
+                '<audio autoplay><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>'
+            ),
+        ),
+
         footer(),
-        min_height="100vh", background=BG,
+        min_height="100vh",
+        background=BG,
     )
 
 def services():
