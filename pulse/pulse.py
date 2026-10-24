@@ -67,41 +67,46 @@ except Exception as e:
 
 #the telemetry class
 class TelemetryState(rx.State):
-    
-    
-    # Live RAM UI Metrics
     ram_util: float = 0.0
     ram_delta: float = 0.0
     ram_drift: float = 0.0
     ram_status: str = "Idle"
     ram_is_anomaly: bool = False
     ram_monitoring_active: bool = False
-    ram_chart_data: list[dict] = []
     
+    # FIX 1: Pre-fill with one dummy point so the chart never crashes on load
+    ram_chart_data: list[dict[str, str | float]] = [{"time": "00:00:00", "RAM": 0.0}]
+
+    # FIX 2: Calculate the color safely on the backend
+    @rx.var
+    def ram_status_color(self) -> str:
+        if self.ram_is_anomaly:
+            return "#ef4444"  # Red for Anomaly
+        if self.ram_monitoring_active:
+            return GREEN      # Green for Detecting
+        return MUTED          # Gray for Idle
+
     @rx.event
     def toggle_ram_monitoring(self, active: bool):
-        """Fired when the user clicks the UI switch."""
         self.ram_monitoring_active = active
         if not active:
             self.ram_status = "Idle"
             self.ram_is_anomaly = False
+            # Reset chart to dummy point when turned off
+            self.ram_chart_data = [{"time": "00:00:00", "RAM": 0.0}]
 
     @rx.event(background=True)
     async def stream_ram_telemetry(self):
-        """Async background daemon."""
-        
+        # ... (keep your existing stream_ram_telemetry logic exactly as is)
         buffer = deque(maxlen=12)
-        
         while True:
             async with self:
-                # ONLY run the heavy ML and hardware polling if the switch is ON
                 if self.ram_monitoring_active:
                     curr_ram = psutil.virtual_memory().percent
                     buffer.append(curr_ram)
                     
                     self.ram_util = curr_ram
                     
-                    # Wait until rolling buffer has 12 seconds of data
                     if len(buffer) == 12:
                         delta = curr_ram - buffer[-2]
                         rolling_mean = np.mean(buffer)
@@ -121,7 +126,6 @@ class TelemetryState(rx.State):
                         new_point = {"time": time.strftime("%H:%M:%S"), "RAM": curr_ram}
                         self.ram_chart_data = self.ram_chart_data[-19:] + [new_point]
                 else:
-                    # If turned off, clear the buffer so we don't use stale data when turned back on
                     buffer.clear()
 
             await asyncio.sleep(1)
@@ -706,17 +710,14 @@ def service_card(title: str, description: str, icon_tag: str):
 def ram_telemetry_card():
     """The self-contained UI card for the RAM ML Engine."""
     return rx.vstack(
-        # 1. Header: Title, Status Text, and Toggle Switch
         rx.hstack(
             rx.heading("RAM Engine", size="5", color=TEXT),
             rx.spacer(),
-            # Shows "Detecting..." or "Idle" based on state
             rx.text(
                 rx.cond(TelemetryState.ram_monitoring_active, "Detecting...", "Idle"), 
                 color=MUTED, 
                 size="2"
             ),
-            # The On/Off Switch
             rx.switch(
                 is_checked=TelemetryState.ram_monitoring_active,
                 on_change=TelemetryState.toggle_ram_monitoring,
@@ -726,7 +727,6 @@ def ram_telemetry_card():
             align_items="center",
         ),
 
-        # 2. Live Chart (Fixed height so it doesn't break the grid)
         rx.recharts.line_chart(
             rx.recharts.line(
                 data_key="RAM", 
@@ -735,30 +735,23 @@ def ram_telemetry_card():
                 dot=False
             ),
             rx.recharts.y_axis(domain=[0, 100], stroke=MUTED),
-            rx.recharts.x_axis(data_key="time", hide=True), # Hidden to save space
+            rx.recharts.x_axis(data_key="time", hide=True),
             data=TelemetryState.ram_chart_data,
             width="100%",
             height=200,
         ),
 
-        # 3. Footer: Anomaly Status Label
         rx.center(
             rx.heading(
                 TelemetryState.ram_status,
                 size="4",
-                # Dynamic coloring: Red if anomaly, Green if active, Gray if idle
-                color=rx.cond(
-                    TelemetryState.ram_is_anomaly, 
-                    "#ef4444", 
-                    rx.cond(TelemetryState.ram_monitoring_active, GREEN, MUTED)
-                )
+                color=TelemetryState.ram_status_color 
             ),
             width="100%",
             padding_top="10px",
             border_top=f"1px solid {BORDER}",
         ),
 
-        # Card Styling
         width="100%",
         height="100%",
         padding="20px",
@@ -775,38 +768,20 @@ def home():
         navbar(),
         
         rx.center(
-            # The 2x2 Grid Container
             rx.grid(
-                # Top Left: RAM Model
                 ram_telemetry_card(),
-                
-                # Top Right: Placeholder for IO
                 rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
-                
-                # Bottom Left: Placeholder for CPU
                 rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
-                
-                # Bottom Right: Placeholder for GPU
                 rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
-                
                 columns="2",
                 spacing="6",
                 width="100%",
                 max_width="1200px",
-                # Forces the grid to fit nicely between navbar and footer without scrolling
                 height="calc(100vh - 160px)", 
                 padding="20px",
             ),
             flex="1",
             width="100%",
-        ),
-
-        # Live Audio Alarm Trigger (Plays when RAM Anomaly detected)
-        rx.cond(
-            TelemetryState.ram_is_anomaly,
-            rx.html(
-                '<audio autoplay><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>'
-            ),
         ),
 
         footer(),
@@ -1150,28 +1125,6 @@ def index():
         background=BG,
     )
 
-# HOME
-# ================================================================================
-def home():
-
-    return rx.vstack(
-
-        navbar(),
-
-        rx.center(
-            rx.heading(
-                "Home",
-                size="8",
-                color=GREEN,
-            ),
-            flex="1",
-        ),
-
-        footer(),
-
-        min_height="100vh",
-        background=BG,
-    )
 
 # ===============================================================================
 # APP ROUTING
@@ -1191,7 +1144,15 @@ app.add_page(index, route="/", title="Pulse")
 app.add_page(log_page, route="/login", title="Login | Pulse", on_load=AuthState.reset_auth_state)
 
 #Protected Pages (Requires Authentication)
-app.add_page(home, route="/home", title="Dashboard | Pulse", on_load=AuthState.check_auth)
+# FIXED: Starts the daemon on page load
+app.add_page(
+    home, 
+    route="/home", 
+    title="Dashboard | Pulse", 
+    on_load=[AuthState.check_auth, TelemetryState.stream_ram_telemetry]
+)
+
+
 app.add_page(services, route="/services", title="Services | Pulse", on_load=AuthState.check_auth)
 
 #Contact Page (Made public so unauthenticated users can email you)
