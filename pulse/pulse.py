@@ -408,7 +408,7 @@ def navbar():
         
         width="100%",
         background=NAV_BG,
-        padding="20px 40px 0 40px",
+        padding="10px 40px 0 40px",
     )
 
 #================================================================================
@@ -770,18 +770,19 @@ def home():
         rx.center(
             rx.grid(
                 ram_telemetry_card(),
-                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
-                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
-                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", height="100%"),
+                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
+                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
+                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
                 columns="2",
                 spacing="6",
                 width="100%",
                 max_width="1200px",
-                height="calc(100vh - 160px)", 
                 padding="20px",
+                # Notice we removed the rigid 'height=calc(...)' line!
             ),
             flex="1",
             width="100%",
+            padding_bottom="40px", # Give it breathing room above the footer
         ),
 
         footer(),
