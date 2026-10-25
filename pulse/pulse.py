@@ -129,6 +129,83 @@ class TelemetryState(rx.State):
                     buffer.clear()
 
             await asyncio.sleep(1)
+    
+    # ==========================================
+    # NETWORK IO ENGINE STATE
+    # ==========================================
+    io_status: str = "Idle"
+    io_is_anomaly: bool = False
+    io_monitoring_active: bool = False
+    
+    # Pre-fill with a dummy point (We will track both Inbound and Outbound)
+    io_chart_data: list[dict[str, str | float]] = [{"time": "00:00:00", "Inbound": 0.0, "Outbound": 0.0}]
+
+    @rx.var
+    def io_status_color(self) -> str:
+        if self.io_is_anomaly:
+            return "#ef4444"  # Red
+        if self.io_monitoring_active:
+            return GREEN      # Green
+        return MUTED          # Gray
+
+    @rx.event
+    def toggle_io_monitoring(self, active: bool):
+        self.io_monitoring_active = active
+        if not active:
+            self.io_status = "Idle"
+            self.io_is_anomaly = False
+            self.io_chart_data = [{"time": "00:00:00", "Inbound": 0.0, "Outbound": 0.0}]
+
+    @rx.event(background=True)
+    async def stream_io_telemetry(self):
+        """Async background daemon for Network IO."""
+        recv_buffer = deque(maxlen=12)
+        sent_buffer = deque(maxlen=12)
+        last_net = psutil.net_io_counters()
+
+        while True:
+            async with self:
+                if self.io_monitoring_active:
+                    current_net = psutil.net_io_counters()
+                    # Calculate KB/s
+                    recv_kbs = (current_net.bytes_recv - last_net.bytes_recv) / 1024.0
+                    sent_kbs = (current_net.bytes_sent - last_net.bytes_sent) / 1024.0
+                    last_net = current_net
+                    
+                    recv_buffer.append(recv_kbs)
+                    sent_buffer.append(sent_kbs)
+                    
+                    if len(recv_buffer) == 12:
+                        r_delta = recv_kbs - recv_buffer[-2]
+                        s_delta = sent_kbs - sent_buffer[-2]
+                        r_drift = recv_kbs - np.mean(recv_buffer)
+                        s_drift = sent_kbs - np.mean(sent_buffer)
+                        
+                        if xgb_io_model is not None:
+                            X_live = pd.DataFrame([{
+                                'bytes_recv': recv_kbs,
+                                'bytes_sent': sent_kbs,
+                                'recv_delta': r_delta,
+                                'sent_delta': s_delta,
+                                'recv_diff_rolling': r_drift,
+                                'sent_diff_rolling': s_drift
+                            }])
+                            pred = xgb_io_model.predict(X_live)[0]
+                            self.io_is_anomaly = bool(pred == 1)
+                            self.io_status = "🚨 ANOMALY" if self.io_is_anomaly else "✅ Normal"
+                        else:
+                            self.io_status = "Model Missing"
+                            
+                        # Add new data points for the graph
+                        new_point = {"time": time.strftime("%H:%M:%S"), "Inbound": recv_kbs, "Outbound": sent_kbs}
+                        self.io_chart_data = self.io_chart_data[-19:] + [new_point]
+                else:
+                    recv_buffer.clear()
+                    sent_buffer.clear()
+                    # Keep baseline fresh while sleeping so it doesn't spike when turned on
+                    last_net = psutil.net_io_counters()
+
+            await asyncio.sleep(1)
 
 #contact class here
 class ContactState(rx.State):
@@ -403,12 +480,12 @@ def navbar():
             width="100%",
             height="3px",
             background=GREEN,
-            margin_top="15px",
+            margin_top="3px",
         ),
         
         width="100%",
         background=NAV_BG,
-        padding="10px 40px 0 40px",
+        padding="15px 40px 0 40px",
     )
 
 #================================================================================
@@ -738,7 +815,7 @@ def ram_telemetry_card():
             rx.recharts.x_axis(data_key="time", hide=True),
             data=TelemetryState.ram_chart_data,
             width="100%",
-            height=200,
+            height=140,
         ),
 
         rx.center(
@@ -753,8 +830,59 @@ def ram_telemetry_card():
         ),
 
         width="100%",
-        height="100%",
-        padding="20px",
+        height="280px",
+        padding="15px",
+        background=CARD_BG,
+        border=f"1px solid {BORDER}",
+        border_radius="16px",
+        box_shadow="0 10px 30px rgba(0,0,0,0.2)",
+    )
+
+def io_telemetry_card():
+    """The self-contained UI card for the Network IO ML Engine."""
+    return rx.vstack(
+        rx.hstack(
+            rx.heading("Network I/O", size="5", color=TEXT),
+            rx.spacer(),
+            rx.text(
+                rx.cond(TelemetryState.io_monitoring_active, "Detecting...", "Idle"), 
+                color=MUTED, 
+                size="2"
+            ),
+            rx.switch(
+                is_checked=TelemetryState.io_monitoring_active,
+                on_change=TelemetryState.toggle_io_monitoring,
+                color_scheme="green",
+            ),
+            width="100%",
+            align_items="center",
+        ),
+
+        rx.recharts.line_chart(
+            # Two lines for Network! Inbound (Green) and Outbound (Yellow)
+            rx.recharts.line(data_key="Inbound", stroke=GREEN, stroke_width=2, dot=False),
+            rx.recharts.line(data_key="Outbound", stroke=YELLOW, stroke_width=2, dot=False),
+            rx.recharts.y_axis(stroke=MUTED),
+            rx.recharts.x_axis(data_key="time", hide=True),
+            data=TelemetryState.io_chart_data,
+            width="100%",
+            height=140,
+        ),
+
+        rx.center(
+            rx.heading(
+                TelemetryState.io_status,
+                size="4",
+                color=TelemetryState.io_status_color 
+            ),
+            width="100%",
+            padding_top="10px",
+            border_top=f"1px solid {BORDER}",
+        ),
+
+        width="100%",
+        height="280px",
+        padding="15px",
         background=CARD_BG,
         border=f"1px solid {BORDER}",
         border_radius="16px",
@@ -770,7 +898,7 @@ def home():
         rx.center(
             rx.grid(
                 ram_telemetry_card(),
-                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
+                io_telemetry_card(),
                 rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
                 rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
                 columns="2",
@@ -1150,7 +1278,9 @@ app.add_page(
     home, 
     route="/home", 
     title="Dashboard | Pulse", 
-    on_load=[AuthState.check_auth, TelemetryState.stream_ram_telemetry]
+    on_load=[AuthState.check_auth, 
+    TelemetryState.stream_ram_telemetry,
+    TelemetryState.stream_io_telemetry]    
 )
 
 
