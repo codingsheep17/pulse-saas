@@ -206,6 +206,77 @@ class TelemetryState(rx.State):
                     last_net = psutil.net_io_counters()
 
             await asyncio.sleep(1)
+            
+    # ==========================================
+    # CPU ENGINE STATE
+    # ==========================================
+    cpu_util: float = 0.0
+    cpu_delta: float = 0.0
+    cpu_drift: float = 0.0
+    cpu_status: str = "Idle"
+    cpu_is_anomaly: bool = False
+    cpu_monitoring_active: bool = False
+    
+    # Dummy point to prevent chart crashes
+    cpu_chart_data: list[dict[str, str | float]] = [{"time": "00:00:00", "CPU": 0.0}]
+
+    @rx.var
+    def cpu_status_color(self) -> str:
+        if self.cpu_is_anomaly:
+            return "#ef4444"  # Red
+        if self.cpu_monitoring_active:
+            return GREEN      # Green
+        return MUTED          # Gray
+
+    @rx.event
+    def toggle_cpu_monitoring(self, active: bool):
+        self.cpu_monitoring_active = active
+        if not active:
+            self.cpu_status = "Idle"
+            self.cpu_is_anomaly = False
+            self.cpu_chart_data = [{"time": "00:00:00", "CPU": 0.0}]
+
+    @rx.event(background=True)
+    async def stream_cpu_telemetry(self):
+        """Async background daemon for CPU."""
+        buffer = deque(maxlen=12)
+        psutil.cpu_percent(interval=None) # Prime the hardware sensor
+        
+        while True:
+            async with self:
+                if self.cpu_monitoring_active:
+                    curr_cpu = psutil.cpu_percent(interval=None)
+                    buffer.append(curr_cpu)
+                    
+                    self.cpu_util = curr_cpu
+                    
+                    if len(buffer) == 12:
+                        delta = curr_cpu - buffer[-2]
+                        rolling_mean = np.mean(buffer)
+                        drift = curr_cpu - rolling_mean
+                        
+                        self.cpu_delta = round(delta, 2)
+                        self.cpu_drift = round(drift, 2)
+                        
+                        if xgb_cpu_model is not None:
+                            X_live = pd.DataFrame([{
+                                'cpu_utilization': curr_cpu,
+                                'cpu_delta': delta,
+                                'cpu_diff_rolling': drift
+                            }])
+                            pred = xgb_cpu_model.predict(X_live)[0]
+                            self.cpu_is_anomaly = bool(pred == 1)
+                            self.cpu_status = "🚨 ANOMALY" if self.cpu_is_anomaly else "✅ Normal"
+                        else:
+                            self.cpu_status = "Model Missing"
+                            
+                        new_point = {"time": time.strftime("%H:%M:%S"), "CPU": curr_cpu}
+                        self.cpu_chart_data = self.cpu_chart_data[-19:] + [new_point]
+                else:
+                    buffer.clear()
+                    psutil.cpu_percent(interval=None) # Keep sensor fresh while sleeping
+
+            await asyncio.sleep(1)
 
 #contact class here
 class ContactState(rx.State):
@@ -889,6 +960,55 @@ def io_telemetry_card():
         box_shadow="0 10px 30px rgba(0,0,0,0.2)",
     )
 
+def cpu_telemetry_card():
+    """The self-contained UI card for the CPU ML Engine."""
+    return rx.vstack(
+        rx.hstack(
+            rx.heading("CPU Engine", size="5", color=TEXT),
+            rx.spacer(),
+            rx.text(
+                rx.cond(TelemetryState.cpu_monitoring_active, "Detecting...", "Idle"), 
+                color=MUTED, 
+                size="2"
+            ),
+            rx.switch(
+                is_checked=TelemetryState.cpu_monitoring_active,
+                on_change=TelemetryState.toggle_cpu_monitoring,
+                color_scheme="green",
+            ),
+            width="100%",
+            align_items="center",
+        ),
+
+        rx.recharts.line_chart(
+            rx.recharts.line(data_key="CPU", stroke=GREEN, stroke_width=2, dot=False),
+            rx.recharts.y_axis(domain=[0, 100], stroke=MUTED),
+            rx.recharts.x_axis(data_key="time", hide=True),
+            data=TelemetryState.cpu_chart_data,
+            width="100%",
+            height=140,
+        ),
+
+        rx.center(
+            rx.heading(
+                TelemetryState.cpu_status,
+                size="4",
+                color=TelemetryState.cpu_status_color 
+            ),
+            width="100%",
+            padding_top="10px",
+            border_top=f"1px solid {BORDER}",
+        ),
+
+        width="100%",
+        height="280px",
+        padding="15px",
+        background=CARD_BG,
+        border=f"1px solid {BORDER}",
+        border_radius="16px",
+        box_shadow="0 10px 30px rgba(0,0,0,0.2)",
+    )
+    
 # PROTECTED PAGES (Restored)
 # ================================================================================
 def home():
@@ -899,7 +1019,7 @@ def home():
             rx.grid(
                 ram_telemetry_card(),
                 io_telemetry_card(),
-                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
+                cpu_telemetry_card(),
                 rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
                 columns="2",
                 spacing="6",
@@ -1280,7 +1400,8 @@ app.add_page(
     title="Dashboard | Pulse", 
     on_load=[AuthState.check_auth, 
     TelemetryState.stream_ram_telemetry,
-    TelemetryState.stream_io_telemetry]    
+    TelemetryState.stream_io_telemetry,
+    ]    
 )
 
 
