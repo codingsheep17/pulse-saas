@@ -1537,7 +1537,8 @@ app.add_page(
     on_load=[AuthState.check_auth, 
     TelemetryState.stream_ram_telemetry,
     TelemetryState.stream_io_telemetry,
-    TelemetryState.stream_cpu_telemetry
+    TelemetryState.stream_cpu_telemetry,
+    TelemetryState.stream_gpu_telemetry
     ]    
 )
 
