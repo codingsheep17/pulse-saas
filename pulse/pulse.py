@@ -277,6 +277,91 @@ class TelemetryState(rx.State):
                     psutil.cpu_percent(interval=None) # Keep sensor fresh while sleeping
 
             await asyncio.sleep(1)
+            
+    # ==========================================
+    # GPU ENGINE STATE (Intel iGPU Fallback)
+    # ==========================================
+    gpu_status: str = "Idle"
+    gpu_is_anomaly: bool = False
+    gpu_monitoring_active: bool = False
+    
+    # Dummy point for chart initialization
+    gpu_chart_data: list[dict[str, str | float]] = [{"time": "00:00:00", "Util": 0.0, "VRAM": 0.0}]
+
+    @rx.var
+    def gpu_status_color(self) -> str:
+        if self.gpu_is_anomaly:
+            return "#ef4444"  
+        if self.gpu_monitoring_active:
+            return GREEN      
+        return MUTED          
+
+    @rx.event
+    def toggle_gpu_monitoring(self, active: bool):
+        self.gpu_monitoring_active = active
+        if not active:
+            self.gpu_status = "Idle"
+            self.gpu_is_anomaly = False
+            self.gpu_chart_data = [{"time": "00:00:00", "Util": 0.0, "VRAM": 0.0}]
+
+    @rx.event(background=True)
+    async def stream_gpu_telemetry(self):
+        """Async background daemon for GPU."""
+        util_buffer = deque(maxlen=12)
+        vram_buffer = deque(maxlen=12)
+        temp_buffer = deque(maxlen=12)
+        
+        while True:
+            async with self:
+                if self.gpu_monitoring_active:
+                    # Intel iGPU Fallback metrics
+                    ram = psutil.virtual_memory()
+                    curr_vram = float((ram.used / ram.total) * 100)
+                    curr_util = float(psutil.cpu_percent(interval=None))
+                    curr_temp = 45.0 # Baseline stable thermal for iGPU
+                    
+                    util_buffer.append(curr_util)
+                    vram_buffer.append(curr_vram)
+                    temp_buffer.append(curr_temp)
+                    
+                    if len(util_buffer) == 12:
+                        # Deltas
+                        u_delta = curr_util - util_buffer[-2]
+                        v_delta = curr_vram - vram_buffer[-2]
+                        t_delta = curr_temp - temp_buffer[-2]
+                        
+                        # Baseline Drifts
+                        u_drift = curr_util - np.mean(util_buffer)
+                        v_drift = curr_vram - np.mean(vram_buffer)
+                        t_drift = curr_temp - np.mean(temp_buffer)
+                        
+                        if xgb_gpu_model is not None:
+                            X_live = pd.DataFrame([{
+                                'gpu_utilization': curr_util,
+                                'gpu_vram': curr_vram,
+                                'gpu_temperature': curr_temp,
+                                'util_delta': u_delta,
+                                'vram_delta': v_delta,
+                                'temp_delta': t_delta,
+                                'util_diff_rolling': u_drift,
+                                'vram_diff_rolling': v_drift,
+                                'temp_diff_rolling': t_drift
+                            }])
+                            pred = xgb_gpu_model.predict(X_live)[0]
+                            self.gpu_is_anomaly = bool(pred == 1)
+                            self.gpu_status = "🚨 ANOMALY" if self.gpu_is_anomaly else "✅ Normal"
+                        else:
+                            self.gpu_status = "Model Missing"
+                            
+                        # Update Chart Data
+                        new_point = {"time": time.strftime("%H:%M:%S"), "Util": curr_util, "VRAM": curr_vram}
+                        self.gpu_chart_data = self.gpu_chart_data[-19:] + [new_point]
+                else:
+                    util_buffer.clear()
+                    vram_buffer.clear()
+                    temp_buffer.clear()
+
+            await asyncio.sleep(1)
 
 #contact class here
 class ContactState(rx.State):
@@ -386,7 +471,7 @@ class AuthState(rx.State):
         
         # 1. CAPTCHA GUARD CHECK
         if not self.turnstile_token:
-            self.login_message = "Please complete the 'Verify you are human' check."
+            self.login_message = "Please complete the verification check."
             self.login_message_type = "error"
             return
             
