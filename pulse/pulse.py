@@ -1155,6 +1155,7 @@ def home():
                 ram_telemetry_card(),
                 io_telemetry_card(),
                 cpu_telemetry_card(),
+                gpu_telemetry_card(),
                 rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
                 columns="2",
                 spacing="6",
