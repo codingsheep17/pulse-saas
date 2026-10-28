@@ -1093,6 +1093,56 @@ def cpu_telemetry_card():
         border_radius="16px",
         box_shadow="0 10px 30px rgba(0,0,0,0.2)",
     )
+
+def gpu_telemetry_card():
+    """The self-contained UI card for the GPU ML Engine."""
+    return rx.vstack(
+        rx.hstack(
+            rx.heading("GPU Engine", size="5", color=TEXT),
+            rx.spacer(),
+            rx.text(
+                rx.cond(TelemetryState.gpu_monitoring_active, "Detecting...", "Idle"), 
+                color=MUTED, 
+                size="2"
+            ),
+            rx.switch(
+                is_checked=TelemetryState.gpu_monitoring_active,
+                on_change=TelemetryState.toggle_gpu_monitoring,
+                color_scheme="green",
+            ),
+            width="100%",
+            align_items="center",
+        ),
+
+        rx.recharts.line_chart(
+            rx.recharts.line(data_key="Util", stroke=GREEN, stroke_width=2, dot=False),
+            rx.recharts.line(data_key="VRAM", stroke=YELLOW, stroke_width=2, dot=False),
+            rx.recharts.y_axis(domain=[0, 100], stroke=MUTED),
+            rx.recharts.x_axis(data_key="time", hide=True),
+            data=TelemetryState.gpu_chart_data,
+            width="100%",
+            height=140,
+        ),
+
+        rx.center(
+            rx.heading(
+                TelemetryState.gpu_status,
+                size="4",
+                color=TelemetryState.gpu_status_color 
+            ),
+            width="100%",
+            padding_top="10px",
+            border_top=f"1px solid {BORDER}",
+        ),
+
+        width="100%",
+        height="280px",
+        padding="15px",
+        background=CARD_BG,
+        border=f"1px solid {BORDER}",
+        border_radius="16px",
+        box_shadow="0 10px 30px rgba(0,0,0,0.2)",
+    )
     
 # PROTECTED PAGES (Restored)
 # ================================================================================
