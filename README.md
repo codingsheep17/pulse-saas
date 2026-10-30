@@ -40,3 +40,5 @@ AI-native infrastructure intelligenceand early warning telemetry platform.
 =======
 #time for deployment
 >>>>>>> d6af0ce (Time for deployment)
+
+#time for the conversion into a desktop app

@@ -12,9 +12,6 @@ import numpy as np
 import psutil
 from collections import deque
 
-#working with ram continue it
-
-
 # Pulse Global Colors
 GREEN = "#B7E36B"
 YELLOW = "#F2D16B"
@@ -1156,7 +1153,6 @@ def home():
                 io_telemetry_card(),
                 cpu_telemetry_card(),
                 gpu_telemetry_card(),
-                rx.box(border=f"1px dashed {BORDER}", border_radius="16px", min_height="350px"),
                 columns="2",
                 spacing="6",
                 width="100%",
