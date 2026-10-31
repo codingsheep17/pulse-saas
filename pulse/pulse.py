@@ -1639,9 +1639,9 @@ app.add_page(index, route="/", title="Pulse")
 
 #Login Page (Properly triggers the reset function on load)
 app.add_page(log_page, route="/login", title="Login | Pulse", on_load=AuthState.reset_auth_state)
+app.add_page(reset_password_page, route="/reset-password", title="Reset Password | Pulse")
 
 #Protected Pages (Requires Authentication)
-# FIXED: Starts the daemon on page load
 app.add_page(
     home, 
     route="/home", 
