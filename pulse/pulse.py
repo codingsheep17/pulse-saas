@@ -465,10 +465,12 @@ class AuthState(rx.State):
             # Replaces localhost with live production URL when deployed
             redirect_url = "http://localhost:3000/reset-password"
             
+            # FIXED: Wrapped redirect_to inside the options dictionary
             supabase.auth.reset_password_for_email(
                 self.reset_email,
-                redirect_to=redirect_url
+                options={"redirect_to": redirect_url}
             )
+            
             self.reset_message = "Password reset link sent! Check your inbox."
             self.reset_message_type = "success"
         except Exception as e:
