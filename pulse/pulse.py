@@ -436,6 +436,65 @@ class AuthState(rx.State):
     is_authenticated: bool = False
     last_signup_attempt: float = 0.0
     
+    # Reset Password Variables
+    reset_email: str = ""
+    new_password: str = ""
+    reset_message: str = ""
+    reset_message_type: str = ""
+
+    @rx.event
+    def set_reset_email(self, value: str):
+        self.reset_email = value.strip()
+
+    @rx.event
+    def set_new_password(self, value: str):
+        self.new_password = value
+
+    @rx.event
+    def request_password_reset(self):
+        """Sends a recovery email via Supabase Auth."""
+        self.reset_message = ""
+        self.reset_message_type = ""
+
+        if not self.reset_email:
+            self.reset_message = "Please enter your registered email address."
+            self.reset_message_type = "error"
+            return
+
+        try:
+            # Replaces localhost with live production URL when deployed
+            redirect_url = "http://localhost:3000/reset-password"
+            
+            supabase.auth.reset_password_for_email(
+                self.reset_email,
+                redirect_to=redirect_url
+            )
+            self.reset_message = "Password reset link sent! Check your inbox."
+            self.reset_message_type = "success"
+        except Exception as e:
+            self.reset_message = f"Error: {str(e)}"
+            self.reset_message_type = "error"
+
+    @rx.event
+    def update_password(self):
+        """Updates user password after clicking the email link."""
+        self.reset_message = ""
+        self.reset_message_type = ""
+
+        if not self.new_password or len(self.new_password) < 6:
+            self.reset_message = "New password must be at least 6 characters."
+            self.reset_message_type = "error"
+            return
+
+        try:
+            supabase.auth.update_user({"password": self.new_password})
+            self.reset_message = "Password updated successfully! You can now log in."
+            self.reset_message_type = "success"
+            return rx.redirect("/login")
+        except Exception as e:
+            self.reset_message = f"Failed to update password: {str(e)}"
+            self.reset_message_type = "error"
+    
     @rx.event
     def set_email(self, value: str):
         self.email = value
@@ -796,6 +855,63 @@ def login_card():
         box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
     )
 
+#=======================================================================================================
+#pass reset area
+def reset_password_page():
+    """Dedicated page rendered when user clicks the password recovery link."""
+    return rx.vstack(
+        navbar(),
+        
+        rx.center(
+            rx.vstack(
+                rx.heading("Set New Password", size="7", color=TEXT, margin_bottom="20px"),
+                
+                rx.input(
+                    placeholder="Enter new password",
+                    type="password",
+                    on_change=AuthState.set_new_password,
+                    width="100%",
+                    background="#252D29",
+                    border_color=BORDER,
+                    color=TEXT,
+                ),
+                
+                rx.button(
+                    "Update Password",
+                    on_click=AuthState.update_password,
+                    width="100%",
+                    background=GREEN,
+                    color=BG,
+                    margin_top="15px",
+                    cursor="pointer",
+                ),
+
+                rx.cond(
+                    AuthState.reset_message != "",
+                    rx.text(
+                        AuthState.reset_message,
+                        color=rx.cond(AuthState.reset_message_type == "success", GREEN, YELLOW),
+                        margin_top="10px",
+                        text_align="center",
+                    ),
+                ),
+                
+                width="380px",
+                padding="40px",
+                background=CARD_BG,
+                border=f"1px solid {BORDER}",
+                border_radius="20px",
+                box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
+            ),
+            flex="1",
+            width="100%",
+        ),
+
+        footer(),
+        min_height="100vh",
+        background=BG,
+    )
+    
 # ===============================================================================
 # LOGIN PAGE ASSEMBLY
 # ===============================================================================
