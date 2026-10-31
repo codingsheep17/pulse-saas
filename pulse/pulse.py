@@ -804,12 +804,74 @@ def auth_middle_section():
         ),
         rx.html('<div id="my-captcha-box"></div>'),
         
-        rx.link("forgot pass?", color=MUTED, margin_top="15px", _hover={"color": GREEN}),
+        rx.link("forgot pass?", href="/forgot-password", color=MUTED, margin_top="15px", _hover={"color": GREEN}),
         
         align_items="center",
         justify_content="center",
         width="280px",
         spacing="6",
+    )
+
+def forgot_password_page():
+    """Page where users enter their email to request a recovery link."""
+    return rx.vstack(
+        navbar(),
+        
+        rx.center(
+            rx.vstack(
+                rx.heading("Recover Account", size="7", color=TEXT, margin_bottom="10px"),
+                rx.text("Enter your email to receive a reset link.", color=MUTED, margin_bottom="20px", text_align="center"),
+                
+                # Captures the email into AuthState.reset_email
+                rx.input(
+                    placeholder="Enter registered email",
+                    type="email",
+                    on_change=AuthState.set_reset_email,
+                    width="100%",
+                    background="#252D29",
+                    border_color=BORDER,
+                    color=TEXT,
+                ),
+                
+                # Triggers the Supabase recovery email
+                rx.button(
+                    "Send Reset Link",
+                    on_click=AuthState.request_password_reset,
+                    width="100%",
+                    background=BG,                 
+                    color=TEXT,
+                    border=f"1px solid {BORDER}",  
+                    margin_top="15px",
+                    cursor="pointer",
+                    transition="all 0.2s ease",
+                    _hover={"background": GREEN, "color": BG, "border_color": GREEN},
+                ),
+
+                # Displays success or error messages
+                rx.cond(
+                    AuthState.reset_message != "",
+                    rx.text(
+                        AuthState.reset_message,
+                        color=rx.cond(AuthState.reset_message_type == "success", GREEN, YELLOW),
+                        margin_top="15px",
+                        text_align="center",
+                    ),
+                ),
+                
+                width="380px",
+                padding="40px",
+                background=CARD_BG,
+                border=f"1px solid {BORDER}",
+                border_radius="20px",
+                box_shadow="0 20px 60px rgba(0, 0, 0, 0.35)",
+            ),
+            flex="1",
+            width="100%",
+        ),
+
+        footer(),
+        min_height="100vh",
+        background=BG,
     )
 
 def login_card():
@@ -1640,7 +1702,7 @@ app.add_page(index, route="/", title="Pulse")
 #Login Page (Properly triggers the reset function on load)
 app.add_page(log_page, route="/login", title="Login | Pulse", on_load=AuthState.reset_auth_state)
 app.add_page(reset_password_page, route="/reset-password", title="Reset Password | Pulse")
-
+app.add_page(forgot_password_page, route="/forgot-password", title="Forgot Password | Pulse")
 #Protected Pages (Requires Authentication)
 app.add_page(
     home, 
