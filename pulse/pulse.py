@@ -54,10 +54,10 @@ supabase = create_client(
 
 #models
 try:
-    xgb_ram_model = joblib.load("D:/Desktop/Pulse/models/xgboost_ram.pkl")
-    xgb_io_model = joblib.load("D:/Desktop/Pulse/models/xgb_net.pkl")
-    xgb_cpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_cpu.pkl")
-    xgb_gpu_model = joblib.load("D:/Desktop/Pulse/models/xgboost_gpu.pkl")
+    xgb_ram_model = joblib.load("models/xgboost_ram.pkl")
+    xgb_io_model = joblib.load("models/xgb_net.pkl")
+    xgb_cpu_model = joblib.load("models/xgboost_cpu.pkl")
+    xgb_gpu_model = joblib.load("models/xgboost_gpu.pkl")
 except Exception as e:
     xgb_ram_model = None
     print(f"Model load error: {e}")
@@ -441,6 +441,18 @@ class AuthState(rx.State):
     new_password: str = ""
     reset_message: str = ""
     reset_message_type: str = ""
+    
+    # URL Hash Tokens for Password Reset
+    access_token: str = ""
+    refresh_token: str = ""
+
+    @rx.event
+    def set_access_token(self, value: str):
+        self.access_token = value
+
+    @rx.event
+    def set_refresh_token(self, value: str):
+        self.refresh_token = value
 
     @rx.event
     def set_reset_email(self, value: str):
@@ -463,7 +475,7 @@ class AuthState(rx.State):
 
         try:
             # Replaces localhost with live production URL when deployed
-            redirect_url = "http://localhost:3000/reset-password"
+            redirect_url = "https://pulse-red-sun.reflex.run/reset-password"
             
             # FIXED: Wrapped redirect_to inside the options dictionary
             supabase.auth.reset_password_for_email(
@@ -479,7 +491,7 @@ class AuthState(rx.State):
 
     @rx.event
     def update_password(self):
-        """Updates user password after clicking the email link."""
+        """Updates user password using the captured URL tokens."""
         self.reset_message = ""
         self.reset_message_type = ""
 
@@ -489,10 +501,19 @@ class AuthState(rx.State):
             return
 
         try:
+            # 1. Establish the session using the tokens we grabbed from the URL
+            if self.access_token and self.refresh_token:
+                supabase.auth.set_session(self.access_token, self.refresh_token)
+            else:
+                self.reset_message = "Invalid or expired recovery link."
+                self.reset_message_type = "error"
+                return
+
+            # 2. Now that the backend knows WHO we are, update the password
             supabase.auth.update_user({"password": self.new_password})
+            
             self.reset_message = "Password updated successfully! You can now log in."
             self.reset_message_type = "success"
-            return rx.redirect("/login")
         except Exception as e:
             self.reset_message = f"Failed to update password: {str(e)}"
             self.reset_message_type = "error"
@@ -925,6 +946,39 @@ def reset_password_page():
     """Dedicated page rendered when user clicks the password recovery link."""
     return rx.vstack(
         navbar(),
+        
+        # 1. HIDDEN INPUTS TO HOLD THE TOKENS
+        rx.input(id="access_token_input", on_change=AuthState.set_access_token, style={"display": "none"}),
+        rx.input(id="refresh_token_input", on_change=AuthState.set_refresh_token, style={"display": "none"}),
+        
+        # 2. SCRIPT TO GRAB URL HASH AND TRIGGER REFLEX
+        rx.script(
+            """
+            setTimeout(function() {
+                let hash = window.location.hash.substring(1);
+                if (hash) {
+                    let params = new URLSearchParams(hash);
+                    let accToken = params.get('access_token');
+                    let refToken = params.get('refresh_token');
+                    
+                    if (accToken && refToken) {
+                        let accInput = document.getElementById("access_token_input");
+                        let refInput = document.getElementById("refresh_token_input");
+                        let nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                        
+                        nativeSetter.call(accInput, accToken);
+                        accInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        
+                        nativeSetter.call(refInput, refToken);
+                        refInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        
+                        // Clear the URL hash for security so the token isn't sitting on the screen
+                        window.history.replaceState(null, null, ' ');
+                    }
+                }
+            }, 500); 
+            """
+        ),
         
         rx.center(
             rx.vstack(
